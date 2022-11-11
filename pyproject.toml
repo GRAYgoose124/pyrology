@@ -10,6 +10,7 @@ include = ["future_algebra/assets/*"]
 [tool.poetry.dependencies]
 python = "^3.10"
 pyaml = "^21.10.1"
+pytest = "^7.2.0"
 
 
 [build-system]
@@ -18,3 +19,4 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 futa = "future_algebra.__main__:main"
+engi = "future_algebra.engine:main"
