@@ -46,6 +46,7 @@ class ScriptEngine:
         
     def query(self, functor, entities):
         results = {}
+        constant_matches = []
         term = f"{functor}/{len(entities)}"
 
         logger.debug(f"Querying {term}({', '.join(entities)})")
@@ -53,14 +54,33 @@ class ScriptEngine:
             return False, results
 
         for fact in self.facts[term]:
-            for e, e2 in zip(entities, fact):
+            logger.debug(f"\tChecking {term}({', '.join(fact)})")
+
+            args = list(zip(entities, fact))
+            logger.debug(f"\t\tArgs: {list(args)}")
+            for e, e2 in args:
+                logger.debug("\t  Comparing %s to %s", e, e2)
+
                 if e[0].isupper():
                     if e not in results:
                         results[e] = []
                     results[e].append(e2)
-                elif e != e2:
-                    return False, results
-        
+                elif e == e2:
+                    if e not in constant_matches:
+                        constant_matches.append(e)
+                    logger.debug("\t\t\tMatched %s to %s | %s", e, e2, results)
+                else:
+                    logger.debug("\t\t\tFailed to match %s to %s | %s", e, e2, results)
+
+        # checkk if all variables have been matched
+        for e in entities:
+            if e[0].isupper() and e not in results:
+                return False, results
+            
+            # check if all constants are equal
+            if e[0].islower() and e not in constant_matches:
+                return False, results
+
         return True, results
 
 
