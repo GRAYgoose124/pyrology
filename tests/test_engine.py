@@ -1,4 +1,4 @@
-from future_algebra.engine import ScriptEngine
+from future_algebra.engine.lib import ScriptEngine
 
 
 def test_engine():

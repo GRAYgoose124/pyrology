@@ -20,3 +20,4 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry.scripts]
 futa = "future_algebra.__main__:main"
 engi = "future_algebra.engine:main"
+lexer = "future_algebra.lexer:main"

@@ -1,20 +1,11 @@
 import logging
-from future_algebra.utils import pretty_facts, pretty_query, get_query
+from future_algebra.utils import pretty_facts, pretty_query, get_query, pretty_rules
 
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG, format='\t| %(name)s:%(levelname)s >\t%(message)s')
 
-class Term:
-    def __init__(self, name, arity):
-        self.name = name
-        self.arity = arity
-    
-    def __str__(self):
-        return self.__repr__()
-        
-    def __repr__(self):
-        return f'{self.name}/{self.arity}'
+
 
 
 class ScriptEngine:
@@ -43,7 +34,14 @@ class ScriptEngine:
         if term not in self.facts:
             self.facts[term] = []
         self.facts[term].append(entities)
-        
+    
+    def rule(self, functor, entities, body):
+        term = f"{functor}/{len(entities)}"
+
+        if term not in self.rules:
+            self.rules[term] = []
+        self.rules[term].append((entities, body))
+
     def query(self, functor, entities):
         results = {}
         constant_matches = []
@@ -94,6 +92,15 @@ def main():
     eng.fact('sibling', ('joe', 'jane'))
     eng.fact('sibling', ('jane', 'joe'))
 
+    eng.rule('grandfather', ('X', 'Z'), [ ('father', ('X', 'Y')), 
+                                          ('father', ('Y', 'Z')) ])
+    eng.rule('grandmother', ('X', 'Z'), [ ('mother', ('X', 'Y')), 
+                                          ('mother', ('Y', 'Z')) ])
+    
+    eng.rule('parent', ('X', 'Y'), [ ('father', ('X', 'Y')) ])
+
+    print(eng.rules)
     pretty_facts(eng)
+    pretty_rules(eng)
     for f, e in get_query():
         pretty_query(eng, f, e)

@@ -5,6 +5,13 @@ def pretty_facts(engine):
     print()
 
 
+def pretty_rules(engine):
+    for term, rules in engine.rules.items():
+        for rule in rules:
+            print(rule[0], rule[1])
+            print(f'{term}({", ".join(rule[0])}) :- {", ".join(rule[1])}')
+    print()
+
 def pretty_query(engine, functor, entities):
     result, results = engine.query(functor, entities)
     if result:
@@ -19,8 +26,10 @@ def pretty_query(engine, functor, entities):
 def get_query():
     while True:
         query = input('query> ')
-        if query == 'exit':
-            break
+        match query:
+            case 'quit':
+                return None
+        
         f, e = query.split('(')
         e = [x.strip() for x in e[:-1].split(',')]
 
