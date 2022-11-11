@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "future-algebra"
+version = "0.1.0"
+description = ""
+authors = ["Grayson Miller <grayson.miller124@gmail.com>"]
+readme = "README.md"
+packages = [{include = "future_algebra", from = "src"}]
+include = ["future_algebra/assets/*"]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+pyaml = "^21.10.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+futa = "future_algebra.__main__:main"

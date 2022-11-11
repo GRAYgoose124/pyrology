@@ -1,0 +1,6 @@
+.venv/
+*.lock
+.vscode/
+*.log
+output/
+*.pyc
