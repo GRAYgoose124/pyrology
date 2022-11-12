@@ -67,15 +67,8 @@ def pretty_facts(engine):
             print(f'{term}({", ".join(fact)})')
     print()
 
-def pretty_rules(engine):
-    for term, rules in engine.rules.items():
-        for rule in rules:
-            print(rule[0], rule[1])
-            print(f'{term}({", ".join(rule[0])}) :- {", ".join(rule[1])}')
-    print()
-
-def pretty_query(engine, functor, entities):
-    result, results = engine.query(functor, entities)
+def pretty_fquery(engine, functor, entities):
+    result, results = engine.functor_query(functor, entities)
     if result:
         print("True")
         for k, v in results.items():

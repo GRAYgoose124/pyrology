@@ -1,6 +1,6 @@
 import logging
 from pyrology.engine.core import KnowledgeEngine
-from pyrology.utils import pretty_query, pretty_rules
+from pyrology.utils import pretty_fquery
 
 
 logger = logging.getLogger(__name__)
@@ -49,12 +49,21 @@ class InteractiveKernel:
                     rels: print the relations
                     h: print this help message''')
                 case _:
-                    try:
-                        f, e = query.split('(')
-                        e = [x.strip() for x in e.split(')')[0].split(',')]
-                    except ValueError:
-                        print("Invalid query, try again.")
-                        continue
-                    
-                    logger.debug("Query: %s = (%s, %s)", query, f, e)
-                    pretty_query(self.engine, f, e)
+                    # Deprecated functor query
+                    if query.startswith('fn?'):
+                        # TODO: just run tokenstream(input('query>'))
+                        query = query[3:].strip()
+                        try:
+                            f, e = query.split('(')
+                            e = [x.strip() for x in e.split(')')[0].split(',')]
+                        except ValueError:
+                            print("Invalid query, try again.")
+                            continue
+                        
+                        logger.debug("Query: %s = (%s, %s)", query, f, e)
+                        pretty_fquery(self.engine, f, e)
+                    else:
+                        result = self.engine.query(query)
+                        print(result[0])
+                        for key, value in result[1].items():
+                            print(f"\t{key}: {value}")

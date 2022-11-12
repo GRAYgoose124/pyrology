@@ -47,6 +47,7 @@ def rule_munch(body):
                 try:
                     functor, args = get_functor(body) 
                     name = get_name(functor, args)
+                    # TODO: Should append this on '.' instead.
                     goals.append([name, args, "FIN"]) # Super dupes!!
                 # This is accounting for infix binary ops, which are not functors???
                 except AttributeError:
@@ -143,7 +144,6 @@ def tokenstream(source):
         'constants': constants,
 
         'relations': relations,
-        'facts': facts, # Deprecate? ALl data is in relations
 
         'rules': rule_tokens,
     }

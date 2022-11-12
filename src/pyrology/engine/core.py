@@ -1,6 +1,7 @@
 import logging
-from pyrology.engine.lexer import tokenstream
-from pyrology.utils import get_source, pretty_facts, pretty_query, pretty_rules
+import queue
+from pyrology.engine.lexer import rule_munch, tokenstream
+from pyrology.utils import get_source
 
 
 logger = logging.getLogger(__name__)
@@ -49,23 +50,81 @@ class KnowledgeEngine:
         self.relations = token_basis['relations']# token_basis['facts'] # Deprecate in facvor of relations?
         logger.debug("Engine initialized with %s constants, %s rules, %s relations, and %s facts.", len(self.constants), len(self.rules), len(self.rels), len(self.relations))
  
-    def query(self, functor, entities):
+    def query(self, input_string):
+        # Basic query of the form:
+        # functor(arg1, arg2, ...)[,; functor2(arg1, arg2, ...) [,; ...]].
+        #
+        # We'll perform all queries separately, then chain their result,
+        # ANDING or ORING them together based on the separator used.
+        #
+        # TODO: shortcircuit optimization
+        input_string = input_string.replace(" ", "")
+
+        query = rule_munch(input_string)
+        logger.debug('CLIQuery: %s from %s', query , input_string)
+        
+        # Check relational queries.
+        final_result = True
+        partial_results = []
+        for functor, args, binop in query:
+            # check if and or 
+            logger.debug("  Next goal: %s(%s) %s", functor, ', '.join(args), query)
+
+            r = self.functor_query(functor, args)
+            logger.debug("\tPartial result: %s", r)
+            partial_results.append(r)
+
+            if binop == 'AND':
+                final_result = final_result and r[0]
+            elif binop == 'OR':
+                final_result = final_result or r[0]
+            elif binop == 'FIN':
+                final_result = final_result and r[0]
+                break
+            else:
+                raise ValueError(f"Invalid binary operator {binop}")
+
+        logger.debug("  Results: %s\tFinal=%s", partial_results, final_result)
+    
+        # Cross reference all variables used in goals. hack, TODO: unify
+        final_variables = {}
+        for i, (result, variables) in enumerate(partial_results):
+            for key in variables:
+                for j, (result2, variables2) in enumerate(partial_results):
+                    if i == j:
+                        continue
+                    if key in variables2:
+                        if variables[key] != variables2[key]:
+                            final_result = False
+                            final_variables = {key: f"Fail= !any({variables[key]} in {variables2[key]})"}
+                            break
+            # Lets join all variables together for final output.
+            if final_result:
+                final_variables.update(variables)
+        
+        return final_result, final_variables
+
+
+    def functor_query(self, functor, entities):
         results = {}
         constant_matches = []
-        term = f"{functor}/{len(entities)}"
+        if '/' in functor and functor.split('/')[1].isnumeric():
+            term = functor
+        else:
+            term = f"{functor}/{len(entities)}"
 
-        logger.debug(f"Querying {term}({', '.join(entities)})")
+        logger.debug(f"\t  Querying {term}...")
         if term not in self.relations:
-            logger.debug(f"\t{term} not in facts.")
+            logger.debug(f"\t\t{term} not in facts.")
             return False, results
 
         for fact in self.relations[term]:
             logger.debug(f"\tChecking {term}({', '.join(fact)})")
 
             args = list(zip(entities, fact))
-            logger.debug(f"\t\tArgs: {list(args)}")
+            logger.debug(f"\t\t  Args: {list(args)}")
             for e, e2 in args:
-                logger.debug("\t  Comparing %s to %s", e, e2)
+                logger.debug("\t\t\t Comparing %s to %s", e, e2)
 
                 if e[0].isupper():
                     if e not in results:
@@ -74,9 +133,9 @@ class KnowledgeEngine:
                 elif e == e2:
                     if e not in constant_matches:
                         constant_matches.append(e)
-                    logger.debug("\t\t\tMatched %s to %s | %s", e, e2, results)
+                    logger.debug("\t\t\t\tMatched %s to %s | %s", e, e2, results)
                 else:
-                    logger.debug("\t\t\tFailed to match %s to %s | %s", e, e2, results)
+                    logger.debug("\t\t\t\tFailed to match %s to %s | %s", e, e2, results)
 
         # checkk if all variables have been matched
         for e in entities:
