@@ -50,7 +50,7 @@ class KnowledgeEngine:
 
         # token_basis['facts'] # Deprecate in facvor of relations?
         self.relations = token_basis['relations']
-        logger.info("Engine initialized with %s constants, %s rules, and %s relations/facts.",
+        logger.info(" - Initialized with %s constants, %s rules, and %s relations.",
                     len(self.constants), len(self.rules), len(self.relations))
 
     def unify_bins(self, bins):

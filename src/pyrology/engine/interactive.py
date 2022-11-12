@@ -1,3 +1,4 @@
+from distutils.log import info
 import logging
 from pyrology.engine.core import KnowledgeEngine
 from pyrology.utils import pretty_fquery
@@ -11,17 +12,20 @@ logging.basicConfig(level=logging.DEBUG,
 class InteractiveKernel:
     def __init__(self, engine=None):
         if engine is None:
-            KnowledgeEngine(interactive=True)
+            engine = KnowledgeEngine(interactive=True)
 
         self.engine = engine
 
     def run(self):
         import readline
 
-        logger.info("Welcome to Pyrology! Starting interactive kernel.")
+        logger.info("")
+        logger.info("Welcome to Pyrology Interactive!")
+        logger.info("Type `help` for more information.")
+        logger.info("")
         while True:
             try:
-                query = input('query> ')
+                query = input('?- ')
             except EOFError:
                 break
             except KeyboardInterrupt:
@@ -69,3 +73,4 @@ class InteractiveKernel:
                         for r in result[1]:
                             for key, value in r.items():
                                 print(f"\t{key}: {value}")
+                        print()

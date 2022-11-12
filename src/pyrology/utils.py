@@ -30,6 +30,7 @@ def write_tokens(tokens, filename):
 def get_source(path):
     if os.path.exists(path):
         with open(path) as f:
+            logger.info(" - Loaded source from `%s`.", path)
             return f.read()
     else:
         print(f"No such file: {path}")

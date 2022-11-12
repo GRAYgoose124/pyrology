@@ -8,7 +8,7 @@ from pyrology.utils import get_source, load_tokens, write_tokens
 from pyrology.engine.lexer import tokenstream
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO,
+logging.basicConfig(level=logging.CRITICAL + 1,
                     format='\t| %(name)s:%(levelname)s >\t%(message)s')
 
 
@@ -22,8 +22,11 @@ def argparser():
                         action='store_true', help="Save the token file.")
     parser.add_argument('--no-save-tokens', dest='save_tokens',
                         action='store_false', help="Don't save the token file.")
+
     parser.add_argument('--debug', default=False,
                         action='store_true', help="Enable debug mode.")
+    parser.add_argument('--info', default=False, action='store_true',)
+    
     return parser
 
 
@@ -32,6 +35,11 @@ def pyrology_handle_args(parser):
 
     if args.debug:
         logging.getLogger().setLevel(logging.DEBUG)
+    elif args.info:
+        logging.basicConfig(level=logging.INFO,
+                           format='%(message)s', force=True)
+    else:
+        logging.getLogger().setLevel(logging.CRITICAL + 1)
 
     if args.tokens is not None:
         path = args.tokens
@@ -45,7 +53,7 @@ def pyrology_handle_args(parser):
         source = get_source(path)
 
         tokens = tokenstream(source)
-        logger.info('Tokenized %s', path)
+        logger.debug('\tTokenized %s', path)
     else:
         logger.error("No script or tokens provided.")
         parser.print_help()
@@ -55,7 +63,7 @@ def pyrology_handle_args(parser):
         token_output_file = os.path.basename(path).split('.')[0]
         token_output_file = f"output/{token_output_file}.yml"
         yml = write_tokens(tokens, token_output_file)
-        logger.info('Saved `%s` tokens to `%s`', path, token_output_file)
+        logger.debug('\tSaved `%s` tokens to `%s`', path, token_output_file)
     else:
         token_output_file = None
         yml = None
