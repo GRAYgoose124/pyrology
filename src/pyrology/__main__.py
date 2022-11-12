@@ -3,7 +3,7 @@ import os
 import yaml
 
 
-from future_algebra.tokenizer import tokenizer
+from pyrology.tokenizer import tokenizer
 
 
 def main(args):

@@ -1,44 +1,7 @@
 import argparse
-from multiprocessing.sharedctypes import Value
 import os
-import time
-import yaml
 
-
-def write_tokens(tokens, filename):
-    """Write tokens to a file and returns the YAML object."""
-    if not os.path.exists("output"):
-        os.mkdir("output")
-
-    with open(filename, 'w') as f:
-        yml = yaml.dump(tokens)
-        f.write(yml)
-
-    return yml
-
-
-def get_source(path):
-    if os.path.exists(path):
-        with open(path) as f:
-            return f.read()
-    else:
-        print(f"No such file: {path}")
-
-TOKENS = ['(', ')', ',', ';', ':-', '.']
-
-def tokenize(statement):
-    """Tokenize a statement."""
-    tokens = []
-    for c in statement:
-        if c in TOKENS:
-            tokens.append(c)
-        else:
-            if tokens and tokens[-1] not in TOKENS:
-                tokens[-1] += c
-            else:
-                tokens.append(c)
-
-    return tokens
+from pyrology.utils import TOKENS, attempt_take_as_binop, get_functor, get_name, get_source, write_tokens
 
 
 def get_first_comma_not_in_parens(string):
@@ -56,14 +19,15 @@ def get_first_comma_not_in_parens(string):
 def rule_munch(body):
     goals = []
     while True:
-        first_comma = get_first_comma_not_in_parens(body) or len(body)
+        bodylen = len(body)
+        first_comma = get_first_comma_not_in_parens(body) or bodylen
         try:
             first_semicolon = body.index(';')
         except ValueError:
-            first_semicolon = len(body)
+            first_semicolon = bodylen
 
         # Try to find the first comma or semicolon, whichever comes first.
-        if first_comma < len(body) or first_semicolon < len(body):
+        if first_comma < bodylen or first_semicolon < bodylen:
             if first_comma < first_semicolon:
                 split = first_comma
                 ty = 'AND'
@@ -71,25 +35,17 @@ def rule_munch(body):
                 split = first_semicolon
                 ty = 'OR'
         else:
-            # we're done, no more tokens to much
+            if body:
+                body = attempt_take_as_binop(body)
+                goals.append([body, "FIN"])
             break
         
         head, body = body[:split], body[split+1:]
-        goals.append((ty, head))
+
+        head = attempt_take_as_binop(head)
+        goals.append([head, ty])
 
     return goals
-
-
-def get_functor(term):
-    functor, args = term.split('(', 1)
-    args = args.split(')')[0].split(',')
-
-    return functor, args
-
-def get_name(functor, args):
-    arity = len(args)
-
-    return f"{functor}/{arity}"
 
 
 def tokenstream(source):
@@ -101,17 +57,16 @@ def tokenstream(source):
     rules = filter(lambda s: ':-' in s, statements)
     facts = filter(lambda s: ':-' not in s, statements)
 
+    # Generate rule tokens.
     rule_tokens = {}
     for rule in rules:
         head, body = rule.split(':-')
         functor, args = get_functor(head)
         name = get_name(functor, args)
         
-        print("HEAD", name, args)
+        goals = rule_munch(body)
 
-        munched = rule_munch(body)
-        print(munched)
-        rule_tokens[name] = { 'args': args, 'body': munched }
+        rule_tokens[name] = { 'args': args, 'goals': goals }
 
 
 

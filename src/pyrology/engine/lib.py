@@ -1,5 +1,5 @@
 import logging
-from future_algebra.utils import pretty_facts, pretty_query, get_query, pretty_rules
+from pyrology.utils import pretty_facts, pretty_query, get_query, pretty_rules
 
 
 logger = logging.getLogger(__name__)
