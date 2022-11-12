@@ -42,7 +42,8 @@ def rule_munch(body):
                 body = attempt_take_as_binop(body)
                 try:
                     functor, args = get_functor(body) 
-                    goals.append([functor, args, "FIN"]) # Super dupes!!
+                    name = get_name(functor, args)
+                    goals.append([name, args, "FIN"]) # Super dupes!!
                 # This is accounting for infix binary ops, which are not functors???
                 except AttributeError:
                     goals.append([body, "FIN"])
@@ -58,7 +59,8 @@ def rule_munch(body):
         # I guess that works? 
         head = attempt_take_as_binop(head)
         functor, args = get_functor(head) # Duplicated?
-        goals.append([functor, args, ty])
+        name = get_name(functor, args)
+        goals.append([name, args, ty])
 
     return goals
 
