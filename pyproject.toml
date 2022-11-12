@@ -4,8 +4,8 @@ version = "0.1.0"
 description = ""
 authors = ["Grayson Miller <grayson.miller124@gmail.com>"]
 readme = "README.md"
-packages = [{include = "future_algebra", from = "src"}]
-include = ["future_algebra/assets/*"]
+packages = [{include = "pyrology", from = "src"}]
+include = ["pyrology/assets/*"]
 
 [tool.poetry.dependencies]
 python = "^3.10"
