@@ -45,7 +45,7 @@ class InteractiveKernel:
                 case _:
                     try:
                         f, e = query.split('(')
-                        e = [x.strip() for x in e[:-2].split(',')]
+                        e = [x.strip() for x in e.split(')')[0].split(',')]
                     except ValueError:
                         print("Invalid query, try again.")
                         continue
@@ -85,9 +85,9 @@ class KnowledgeEngine:
 
         self.constants = token_basis['constants']
         self.rules = token_basis['rules']
-        self.relations = token_basis['relations'] 
 
-        self.facts = token_basis['facts'] # Deprecate in facvor of relations?
+        self.relations = token_basis['relations'] 
+        self.related_facts = token_basis['relations']# token_basis['facts'] # Deprecate in facvor of relations?
 
     def query(self, functor, entities):
         results = {}
@@ -95,10 +95,11 @@ class KnowledgeEngine:
         term = f"{functor}/{len(entities)}"
 
         logger.debug(f"Querying {term}({', '.join(entities)})")
-        if term not in self.facts:
+        if term not in self.related_facts:
+            logger.debug(f"\t{term} not in facts.")
             return False, results
 
-        for fact in self.facts[term]:
+        for fact in self.related_facts[term]:
             logger.debug(f"\tChecking {term}({', '.join(fact)})")
 
             args = list(zip(entities, fact))
