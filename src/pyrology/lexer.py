@@ -40,7 +40,12 @@ def rule_munch(body):
         else:
             if body: # Gotta be honest, is this check necessary?
                 body = attempt_take_as_binop(body)
-                goals.append([body, "FIN"])
+                try:
+                    functor, args = get_functor(body) 
+                    goals.append([functor, args, "FIN"]) # Super dupes!!
+                # This is accounting for infix binary ops, which are not functors???
+                except AttributeError:
+                    goals.append([body, "FIN"])
             break
         
         # Every iteration, we're splitting t:tt, this is you're classic
@@ -52,7 +57,8 @@ def rule_munch(body):
         # 
         # I guess that works? 
         head = attempt_take_as_binop(head)
-        goals.append([head, ty])
+        functor, args = get_functor(head) # Duplicated?
+        goals.append([functor, args, ty])
 
     return goals
 

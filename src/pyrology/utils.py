@@ -35,7 +35,7 @@ def attempt_take_as_binop(term):
 
 def get_functor(term):
     try:
-       functor, args = term.split('(', 1)
+        functor, args = term.split('(', 1)
     except ValueError as e:
         print(f"Invalid term: {term}")
         return None 
