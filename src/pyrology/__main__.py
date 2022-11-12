@@ -49,6 +49,7 @@ def pyrology_handle_args(parser):
         token_output_file = os.path.basename(path).split('.')[0]
         token_output_file = f"output/{token_output_file}.yml"
         yml = write_tokens(tokens, token_output_file)
+        logger.info('Saved `%s` tokens to %s', path, token_output_file)
     else:
         token_output_file = None
         yml = None
@@ -69,8 +70,8 @@ def main():
     tokens = parsed['tokens']
 
     engine = KnowledgeEngine(token_basis=tokens)
-
     cli = InteractiveKernel(engine)
+    
     cli.run()
 
     

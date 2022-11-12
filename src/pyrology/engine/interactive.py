@@ -1,5 +1,6 @@
 import logging
-from pyrology.utils import pretty_query
+from pyrology.engine.core import KnowledgeEngine
+from pyrology.utils import pretty_query, pretty_rules
 
 
 logger = logging.getLogger(__name__)
@@ -7,12 +8,16 @@ logging.basicConfig(level=logging.DEBUG, format='\t| %(name)s:%(levelname)s >\t%
 
 
 class InteractiveKernel:
-    def __init__(self, engine):
+    def __init__(self, engine=None):
+        if engine is None:
+            KnowledgeEngine(interactive=True)
+
         self.engine = engine
 
     def run(self):
         import readline
 
+        logging.info("Welcome to Pyrology! Starting interactive kernel.")
         while True:
             try:
                 query = input('query> ')
@@ -25,18 +30,19 @@ class InteractiveKernel:
             match query:
                 case 'exit':
                     break
-                case 'fs' | 'facts':
-                    print(self.engine.related_facts)
                 case 'cs' | 'constants':
                     print(self.engine.constants)
                 case 'rls' | 'rules':
-                    print(self.engine.rules)
+                    for name, body in self.engine.rules.items():
+                        print(f"  {name:<15}rule: {body['src']}.")
                 case 'rels' | 'relations':
-                    print(self.engine.relations)
+                    for name, args in self.engine.relations.items():
+                        print(f"  {name:<10}")
+                        args = [print(f"\t" + ', '.join(arg)) for arg in args]
+
                 case 'h' | 'help':
                     print('''\
                     exit: exit the interactive shell
-                    fs: print the facts
                     cs: print the constants
                     rls: print the rules
                     rels: print the relations

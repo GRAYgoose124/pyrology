@@ -26,33 +26,40 @@ class KnowledgeEngine:
     If we cannot unify all Var tokens with constants, the goals cannot
     be satisfied, and we'll throw an error.
     """
-    def __init__(self, path=None, token_basis=None):
+    def __init__(self, path=None, token_basis=None, interactive=False):
         if path is not None:
             source = get_source(path)
             token_basis = tokenstream(source)
-        elif token_basis is None:
+        elif token_basis is None and not interactive:
             raise ValueError("No source or token basis provided.")
-        
-        # I believe we don't need to save a set of variables at this level.
-        self.variables = set()
+        elif interactive:
+            token_basis = {
+                # 'variables': variables, # We don't store variables here because we perform unification 
+                #                         # at runtime on local spaces.
+                'constants': set(),
+                'relations': {},
+                'rules': {},
+            }
+
 
         self.constants = token_basis['constants']
         self.rules = token_basis['rules']
 
-        self.relations = token_basis['relations'] 
-        self.related_facts = token_basis['relations']# token_basis['facts'] # Deprecate in facvor of relations?
-
+        self.rels = token_basis['relations'] 
+        self.relations = token_basis['relations']# token_basis['facts'] # Deprecate in facvor of relations?
+        logger.debug("Engine initialized with %s constants, %s rules, %s relations, and %s facts.", len(self.constants), len(self.rules), len(self.rels), len(self.relations))
+ 
     def query(self, functor, entities):
         results = {}
         constant_matches = []
         term = f"{functor}/{len(entities)}"
 
         logger.debug(f"Querying {term}({', '.join(entities)})")
-        if term not in self.related_facts:
+        if term not in self.relations:
             logger.debug(f"\t{term} not in facts.")
             return False, results
 
-        for fact in self.related_facts[term]:
+        for fact in self.relations[term]:
             logger.debug(f"\tChecking {term}({', '.join(fact)})")
 
             args = list(zip(entities, fact))

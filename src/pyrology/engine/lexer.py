@@ -112,7 +112,7 @@ def tokenstream(source):
         
         goals = rule_munch(body)
 
-        rule_tokens[name] = { 'args': args, 'goals': goals }
+        rule_tokens[name] = { 'src': rule, 'args': args, 'goals': goals }
 
     # Get all constants from facts.
     # We're assuming facts have NO variables.
