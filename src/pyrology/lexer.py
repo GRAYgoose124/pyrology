@@ -19,7 +19,9 @@ def get_first_comma_not_in_parens(string):
 def rule_munch(body):
     goals = []
     while True:
+        # Grab len because it's used repeatedly.
         bodylen = len(body)
+        # TODO: Is this making assumptions?
         first_comma = get_first_comma_not_in_parens(body) or bodylen
         try:
             first_semicolon = body.index(';')
@@ -34,14 +36,21 @@ def rule_munch(body):
             elif first_semicolon < first_comma:
                 split = first_semicolon
                 ty = 'OR'
+        # Finally, if there are no commas or semicolons, break.
         else:
-            if body:
+            if body: # Gotta be honest, is this check necessary?
                 body = attempt_take_as_binop(body)
                 goals.append([body, "FIN"])
             break
         
+        # Every iteration, we're splitting t:tt, this is you're classic
+        # token munching algo.
         head, body = body[:split], body[split+1:]
 
+        # However this "lexer" works, we've decided just to try to parse every goal
+        # as a binary operation at some point. 
+        # 
+        # I guess that works? 
         head = attempt_take_as_binop(head)
         goals.append([head, ty])
 
@@ -49,15 +58,45 @@ def rule_munch(body):
 
 
 def tokenstream(source):
-    """Get the rules and facts from a source file."""
+    """Get the rules and facts from a source file.
     
+        All ye who enter here, just **beware**
+
+        Nothing about this is an actual tokenizer, it just produces some 
+        usable token stream and partially initialized environment state
+        for the parser to grok.
+
+        We have rules and facts, and we tokenize them in separate passes.
+
+        The global constant dictionary is created from the set of all
+        lowercase `\w+(.*)` tokens in the source file. This is used to
+        determine a token's typeness, as constants are considered unique 
+        newtypes.
+
+        # In parsing !~!TODO!~!
+        In the unification stage, we'll attempt to unify each Var token
+        with a constant token, and if that fails, we'll attempt to unify
+        it with another Var token. If that fails, we'll just leave it as
+        a Var token. 
+
+        If we cannot unify all Var tokens with constants, the goals cannot
+        be satisfied, and we'll throw an error.
+    """
+    # Who needs whitespace? Lets just sanitize anything we're not *expecting*.
     sanitized = ''.join([c for c in source if c.isalpha() or c.isdigit() or c in ''.join(TOKENS)])
     
+    # Well, I guess individual statements are separated by periods.
+    #
+    # This is by no means mean't to adhere to Prolog specs, rather it's
+    # convenient that it does.
     statements = sanitized.split('.')
     rules = filter(lambda s: ':-' in s, statements)
     facts = filter(lambda s: ':-' not in s, statements)
 
     # Generate rule tokens.
+    #
+    # Let's assume that sources are well-formed, and that rules are merely
+    # a sequenece of goals separated by commas and semicolons. 
     rule_tokens = {}
     for rule in rules:
         head, body = rule.split(':-')
@@ -68,9 +107,19 @@ def tokenstream(source):
 
         rule_tokens[name] = { 'args': args, 'goals': goals }
 
+    # Get all constants from facts.
+    # We're assuming facts have NO variables.
+    # 
+    # Queries are effectively facts with variables, but they are handled at 
+    # runtime, thus separately.
+    constants = set()
+    for fact in facts:
+        functor, args = get_functor(fact)
+        constants.update(args)
 
 
     return {
+        'constants': constants,
         'rules': rule_tokens,
         'facts': list(facts)
     }
