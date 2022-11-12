@@ -6,41 +6,36 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG, format='\t| %(name)s:%(levelname)s >\t%(message)s')
 
 
-
-
-class ScriptEngine:
+class KnowledgeEngine:
     """
-    All atoms are either constants or variables.
-    All variables start with a capital letter and can be constant-substituted. (similar to type generics)
-    All constants start with a lowercase letter and are unique identifiers.
-    A fact is a relation with all constants.
+    Nos - 
+    - All atoms are either constants or variables.
+    - All variables start with a capital letter and can be constant-substituted. (similar to type generics)
+    - All constants start with a lowercase letter and are unique identifiers.
+    - A fact is a relation with all constants.
+    - Unification is the process of finding a substitution that makes two terms 
+    equal.
 
-    relation(atom, <...>).
-
-    rule(VARIABLE, <...>) :- relation(VARIABLE, <...>)[;,] <...>.
 
 
+    Runtime !~!TODO!~!
+    In the unification stage, we'll attempt to unify each Var token
+    with a constant token, and if that fails, we'll attempt to unify
+    it with another Var token. If that fails, we'll just leave it as
+    a Var token. 
+
+    If we cannot unify all Var tokens with constants, the goals cannot
+    be satisfied, and we'll throw an error.
     """
-    def __init__(self, basis=None):
-        self.constants = set()
+    def __init__(self, basis):
+        # I believe we don't need to save a set of variables at this level.
         self.variables = set()
 
-        self.rules = {}
-        self.facts = {}
+        self.constants = basis['constants']
+        self.rules = basis['rules']
+        self.relations = basis['relations'] 
 
-    def fact(self, functor, entities):
-        term = f"{functor}/{len(entities)}"
-
-        if term not in self.facts:
-            self.facts[term] = []
-        self.facts[term].append(entities)
-    
-    def rule(self, functor, entities, body):
-        term = f"{functor}/{len(entities)}"
-
-        if term not in self.rules:
-            self.rules[term] = []
-        self.rules[term].append((entities, body))
+        self.facts = basis['facts'] # Deprecate in facvor of relations?
 
     def query(self, functor, entities):
         results = {}

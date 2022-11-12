@@ -1,7 +1,11 @@
 import argparse
+import logging
 import os
 
 from pyrology.utils import TOKENS, attempt_take_as_binop, get_functor, get_name, get_source, write_tokens
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
 
 def get_first_comma_not_in_parens(string):
@@ -66,29 +70,24 @@ def rule_munch(body):
 
 
 def tokenstream(source):
-    """Get the rules and facts from a source str.
+    """
+    Get a token stream from a source str.
+
+    All ye who enter here, just **beware**.
+    Nothing about this is an actual tokenizer, it just produces some 
+    usable token stream and partially initialized environment state
+    for the parser-engine to grok.
+
+    We have rules and facts, and we tokenize them in separate passes.
+    relations are inferred from facts, and rules are iteratively defined.
+
+    The global constant dictionary is created from the set of all
+    lowercase `functor(a1, a2, a3[, ...])` tokens in the source str. 
     
-        All ye who enter here, just **beware**
+    Constants are used as unique types for the parser-engine.
 
-        Nothing about this is an actual tokenizer, it just produces some 
-        usable token stream and partially initialized environment state
-        for the parser to grok.
-
-        We have rules and facts, and we tokenize them in separate passes.
-
-        The global constant dictionary is created from the set of all
-        lowercase `\w+(.*)` tokens in the source str. This is used to
-        determine a token's typeness, as constants are considered unique 
-        newtypes.
-
-        # In parsing !~!TODO!~!
-        In the unification stage, we'll attempt to unify each Var token
-        with a constant token, and if that fails, we'll attempt to unify
-        it with another Var token. If that fails, we'll just leave it as
-        a Var token. 
-
-        If we cannot unify all Var tokens with constants, the goals cannot
-        be satisfied, and we'll throw an error.
+    relation(atom, <...>).
+    rule(VARIABLE, <...>) :- relation(VARIABLE, <...>)[;,] <...>.
     """
     # Who needs whitespace? Lets just sanitize anything we're not *expecting*.
     sanitized = ''.join([c for c in source if c.isalpha() or c.isdigit() or c in ''.join(TOKENS)])

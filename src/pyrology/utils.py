@@ -1,9 +1,18 @@
 import os
 import yaml
+import logging
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
+
 # Lexer utils
 BIN_TOKENS = [f"\\{op}" for op in ['=', '+', '-', '*']]
 TOKENS = ['(', ')', ',', ';', ':-', '.'] + BIN_TOKENS
 
+
+def load_tokens(path):
+    with open(path) as f:
+        return yaml.load(f, Loader=yaml.FullLoader)
 
 def write_tokens(tokens, filename):
     """Write tokens to a file and returns the YAML object."""
@@ -41,7 +50,7 @@ def get_functor(term):
         return None 
         
     args = args.split(')')[0].split(',')
-    print(term, '->', f"functor={functor}, args={args}")
+    logger.debug(term, '->', f"functor={functor}, args={args}")
 
     return functor, args
 

@@ -1,14 +1,14 @@
-from pyrology.engine.lib import ScriptEngine
+from pyrology.engine.lib import KnowledgeEngine
 from pyrology.utils import pretty_facts, pretty_query, get_query, pretty_rules
 
 
 def test_engine():
-    engine = ScriptEngine()
+    engine = KnowledgeEngine()
 
 def test_engine_use():
     import readline
 
-    eng = ScriptEngine()
+    eng = KnowledgeEngine()
     
     eng.fact('tired', ("dave",))
     eng.fact('father', ('dave', 'joe'))
