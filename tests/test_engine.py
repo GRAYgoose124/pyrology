@@ -3,25 +3,49 @@ from pyrology.engine.lexer import tokenstream
 from pyrology.utils import get_source
 
 
-def test_engine():
-    eng = KnowledgeEngine(path="assets/test.pl")
+def test_query_simple():
+    engine = KnowledgeEngine(path="assets/test.pl")
 
-def test_engine_use():
-    eng = KnowledgeEngine(path="assets/test.pl")
-    
-    # eng.fact('tired', ("dave",))
-    # eng.fact('father', ('dave', 'joe'))
-    # eng.fact('sibling', ('joe', 'jane'))
-    # eng.fact('sibling', ('jane', 'joe'))
+    q = "man(X)."
+    r = engine.query(q)
 
-    # eng.rule('grandfather', ('X', 'Z'), [ ('father', ('X', 'Y')), 
-    #                                       ('father', ('Y', 'Z')) ])
-    # eng.rule('grandmother', ('X', 'Z'), [ ('mother', ('X', 'Y')), 
-    #                                       ('mother', ('Y', 'Z')) ])
-    
-    # eng.rule('parent', ('X', 'Y'), [ ('father', ('X', 'Y')) ])
+    assert(r[0] == True)
 
-   
-    # TODO:
-    # eng.query
-    # assert
+def test_query_or():
+    engine = KnowledgeEngine(path="assets/test.pl")
+
+    q = "man(X); woman(Y); man(Y)."
+    r = engine.query(q)
+
+    assert(r[0] == True)
+
+def test_query_and_or():
+    engine = KnowledgeEngine(path="assets/test.pl")
+
+    q = "man(X), woman(Y); man(Y)."
+    r = engine.query(q)
+
+    assert(r[0] == True)
+
+def test_query_unify_fail():
+    engine = KnowledgeEngine(path="assets/test.pl")
+
+    q = "man(X), woman(X)."
+    r = engine.query(q)
+    assert(r[0] == False)
+
+    q = "man(Y); woman(X), man(X)."
+    r = engine.query(q)
+    assert(r[0] == False)
+
+
+def test_query_unify_pass():
+    engine = KnowledgeEngine(path="assets/test.pl")
+
+    q = "man(X); woman(X)."
+    r = engine.query(q)
+    assert(r[0] == True)
+
+    q = "man(X), woman(Y)."
+    r = engine.query(q)
+    assert(r[0] == True)

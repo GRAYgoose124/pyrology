@@ -50,7 +50,41 @@ class KnowledgeEngine:
 
         self.relations = token_basis['relations']# token_basis['facts'] # Deprecate in facvor of relations?
         logger.info("Engine initialized with %s constants, %s rules, and %s relations/facts.", len(self.constants), len(self.rules), len(self.relations))
- 
+    
+    def unify_bins(self, bins):
+        unified = True
+        final_variables = {}
+
+        for partial_results in bins:
+            for i, (result, variables) in enumerate(partial_results):
+                for key in variables:
+                    for j, (result2, variables2) in enumerate(partial_results):
+                        if i == j:
+                            continue
+                        if key in variables2:
+                            # TODO: This should be disable if we're ORing.
+                            logger.debug("\tCross referencing %s", key)
+                            if variables[key] != variables2[key]:
+                                logger.debug("  \t\"Unification\" failed: %s != %s", variables[key], variables2[key])
+                                unified = False
+                        
+                                if self.PASSTHROUGH_FAILURE_CONDITION:  
+                                    final_variables = {key: f"Fail= !any({variables[key]} in {variables2[key]})"}
+                                elif self.CLEAR_FINAL_VARIABLES_ON_FAIL:
+                                    final_variables = {}
+
+                                break
+                # Lets join all variables together for final output.
+                if unified:
+                    # merge variables into final_variables
+                    for key in variables:
+                        if key not in final_variables:
+                            final_variables[key] = set(variables[key])
+                        else:
+                            final_variables[key].update(variables[key])
+
+        return unified, final_variables
+
     def query(self, input_string):
         # Basic query of the form:
         # functor(arg1, arg2, ...)[,; functor2(arg1, arg2, ...) [,; ...]].
@@ -65,10 +99,11 @@ class KnowledgeEngine:
         logger.debug('CLIQuery: %s from %s', query , input_string)
         
         # Check relational queries.
-        final_result = True
+        final_result = None
+        partial_res_sets = []
         partial_results = []
 
-        next_binop_comp = None
+        prev_binop_comp = None
         for functor, args, binop in query:
             # check if and or 
             logger.debug("  Next goal: %s(%s) %s", functor, ', '.join(args), query)
@@ -76,51 +111,29 @@ class KnowledgeEngine:
             r = self.functor_query(functor, args)
             logger.debug("\tPartial result: %s", r)
 
-            partial_results.append((r[0], r[1], next_binop_comp))
+            if prev_binop_comp == 'OR':
+                partial_res_sets.append(partial_results)
+                partial_results = []
+                final_result = final_result or r[0]
+            elif prev_binop_comp == 'AND' or prev_binop_comp == "FIN":
+                final_result = final_result and r[0]
+            elif prev_binop_comp is None:
+                final_result = r[0]
+            
+            logger.debug("\tFinal result: %s, %s", final_result, r[0])
+
+            partial_results.append((r[0], r[1]))
             if binop == 'FIN':
                 break
 
-            next_binop_comp = binop
+            prev_binop_comp = binop
     
         # Cross reference all variables used in goals. hack, TODO: unify
-        final_variables = {}
         # TODO: Technically we can remove final result updates prior to this point and just
         # chain here to make it.
-        for i, (result, variables, _) in enumerate(partial_results):
-            for key in variables:
-                for j, (result2, variables2, compose_op) in enumerate(partial_results):
-                    if i == j:
-                        continue
-                    if key in variables2:
-                        if compose_op == 'AND' or compose_op == "FIN":
-                            r = result and result2
-                        elif compose_op == 'OR':
-                            r = result or result2
-                        final_result = final_result and r
+        unify_result, final_variables = self.unify_bins(partial_res_sets + [partial_results])
 
-                        if compose_op == 'OR' and r or compose_op == None:
-                            break
-
-                        # TODO: This should be disable if we're ORing.
-                        logging.debug("\tCross referencing", key, variables[key], variables2[key])
-                        if variables[key] != variables2[key]:
-                            logger.debug("  \t\"Unification\" failed: %s != %s, OR: %s", variables[key], variables2[key], compose_op)
-                            final_result = False
-                      
-                            if self.PASSTHROUGH_FAILURE_CONDITION:  
-                                final_variables = {key: f"Fail= !any({variables[key]} in {variables2[key]})"}
-                            elif self.CLEAR_FINAL_VARIABLES_ON_FAIL:
-                                final_variables = {}
-
-                            break
-            # Lets join all variables together for final output.
-            if final_result:
-                # merge variables into final_variables
-                for key in variables:
-                    if key not in final_variables:
-                        final_variables[key] = set(variables[key])
-                    else:
-                        final_variables[key].update(variables[key])
+        final_result = final_result and unify_result
 
         logger.debug("  Results: %s\tFinal=%s", partial_results, final_result)
         return final_result, final_variables
