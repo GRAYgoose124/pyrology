@@ -126,11 +126,12 @@ def tokenstream(source):
         # print (fact, get_functor(fact))
         try:
             functor, args = get_functor(fact)
+            name = get_name(functor, args)
         except TypeError:
             continue # Or break - phantom term is coming up.
-        if functor not in relations:
-            relations[functor] = []
-        relations[functor].extend(args)
+        if name not in relations:
+            relations[name] = []
+        relations[name].append(args)
         constants.update(args)
 
 
