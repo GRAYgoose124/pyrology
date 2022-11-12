@@ -91,7 +91,7 @@ def tokenstream(source):
     # convenient that it does.
     statements = sanitized.split('.')
     rules = filter(lambda s: ':-' in s, statements)
-    facts = filter(lambda s: ':-' not in s, statements)
+    facts = list(filter(lambda s: ':-' not in s and s != '', statements))
 
     # Generate rule tokens.
     #
@@ -109,23 +109,32 @@ def tokenstream(source):
 
     # Get all constants from facts.
     # We're assuming facts have NO variables.
-    # 
+    # git
     # Queries are effectively facts with variables, but they are handled at 
     # runtime, thus separately.
     constants = set()
+    relations = {}
     for fact in facts:
         # print (fact, get_functor(fact))
         try:
             functor, args = get_functor(fact)
         except TypeError:
             continue # Or break - phantom term is coming up.
+        if functor not in relations:
+            relations[functor] = []
+        relations[functor].extend(args)
         constants.update(args)
 
 
     return {
+        # 'variables': variables, # We don't store variables here because we perform unification 
+        #                         # at runtime on local spaces.
         'constants': constants,
+
+        'relations': relations,
+        'facts': facts, # Deprecate? ALl data is in relations
+
         'rules': rule_tokens,
-        'facts': list(facts)
     }
 
 

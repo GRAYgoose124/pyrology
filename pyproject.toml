@@ -18,5 +18,5 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-futa = "pyrology.__main__:main"
+pyrol = "pyrology.__main__:main"
 lexer = "pyrology.lexer:main"

@@ -16,8 +16,10 @@ def main():
 
     source = get_source(path)
     tokened = tokenstream(source)
-
     yml = write_tokens(tokened, f"output/{name}.yaml")
+
+    print(yml)
+
     
 
 if __name__ == "__main__":

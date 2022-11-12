@@ -10,6 +10,11 @@ Too bad, here you go. 🦴🦴🦴
     # poetry shell # if you want a virtual env
     poetry install
 
+## Running
+After installing, try
+
+    $ pyrol assets/script.pl
+
 
 # Resources
 Prolog is a reference, not a requirement. We're just trying to get predicate based classical inference here.
