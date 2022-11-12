@@ -90,7 +90,6 @@ class KnowledgeEngine:
                 final_result = final_result and r[0]
             elif binop == 'OR':
                 chain = True
-                print(chain)
                 logger.debug(" ORing %s and %s", final_result, r[0])
                 final_result = final_result or r[0]
             elif binop == 'FIN':
@@ -116,9 +115,9 @@ class KnowledgeEngine:
                         continue
                     if key in variables2:
                         # TODO: This should be disable if we're ORing.
-                        print("Cross referencing", key, variables[key], variables2[key])
+                        logging.debug("\tCross referencing", key, variables[key], variables2[key])
                         if variables[key] != variables2[key] and not chain:
-                            logger.debug("\t\"Unification\" failed: %s != %s, OR: %s", variables[key], variables2[key], chain)
+                            logger.debug("  \t\"Unification\" failed: %s != %s, OR: %s", variables[key], variables2[key], chain)
                             final_result = False
                       
                             if self.PASSTHROUGH_FAILURE_CONDITION:  
