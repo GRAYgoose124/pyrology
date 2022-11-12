@@ -17,7 +17,7 @@ class InteractiveKernel:
     def run(self):
         import readline
 
-        logging.info("Welcome to Pyrology! Starting interactive kernel.")
+        logger.info("Welcome to Pyrology! Starting interactive kernel.")
         while True:
             try:
                 query = input('query> ')

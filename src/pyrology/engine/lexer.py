@@ -51,7 +51,7 @@ def rule_munch(body):
                     goals.append([name, args, "FIN"]) # Super dupes!!
                 # This is accounting for infix binary ops, which are not functors???
                 except AttributeError:
-                    goals.append([body, "FIN"])
+                    goals.append([body, None, "FIN"])
             break
         
         # Every iteration, we're splitting t:tt, this is you're classic

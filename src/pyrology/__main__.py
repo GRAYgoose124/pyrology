@@ -8,7 +8,7 @@ from pyrology.utils import get_source, load_tokens, write_tokens
 from pyrology.engine.lexer import tokenstream
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, format='\t| %(name)s:%(levelname)s >\t%(message)s')
 
 
 def argparser():
@@ -49,7 +49,7 @@ def pyrology_handle_args(parser):
         token_output_file = os.path.basename(path).split('.')[0]
         token_output_file = f"output/{token_output_file}.yml"
         yml = write_tokens(tokens, token_output_file)
-        logger.info('Saved `%s` tokens to %s', path, token_output_file)
+        logger.info('Saved `%s` tokens to `%s`', path, token_output_file)
     else:
         token_output_file = None
         yml = None
@@ -71,7 +71,7 @@ def main():
 
     engine = KnowledgeEngine(token_basis=tokens)
     cli = InteractiveKernel(engine)
-    
+
     cli.run()
 
     

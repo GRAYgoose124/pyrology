@@ -5,10 +5,12 @@ from pyrology.utils import get_source
 
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG, format='\t| %(name)s:%(levelname)s >\t%(message)s')
+logging.basicConfig(level=logging.DEBUG)
 
 
 class KnowledgeEngine:
+    CLEAR_FINAL_VARIABLES_ON_FAIL = False
+    PASSTHROUGH_FAILURE_CONDITION = True
     """
     Nos - 
     - All atoms are either constants or variables.
@@ -46,9 +48,8 @@ class KnowledgeEngine:
         self.constants = token_basis['constants']
         self.rules = token_basis['rules']
 
-        self.rels = token_basis['relations'] 
         self.relations = token_basis['relations']# token_basis['facts'] # Deprecate in facvor of relations?
-        logger.debug("Engine initialized with %s constants, %s rules, %s relations, and %s facts.", len(self.constants), len(self.rules), len(self.rels), len(self.relations))
+        logger.info("Engine initialized with %s constants, %s rules, and %s relations/facts.", len(self.constants), len(self.rules), len(self.relations))
  
     def query(self, input_string):
         # Basic query of the form:
@@ -66,42 +67,71 @@ class KnowledgeEngine:
         # Check relational queries.
         final_result = True
         partial_results = []
+
+        prev_functor = None
+        next_binop_comp = None
         for functor, args, binop in query:
             # check if and or 
             logger.debug("  Next goal: %s(%s) %s", functor, ', '.join(args), query)
 
             r = self.functor_query(functor, args)
             logger.debug("\tPartial result: %s", r)
-            partial_results.append(r)
 
-            if binop == 'AND':
+        
+            # TODO: I'm probably off by one here.
+            # Probably need to either move the AND, OR in the lexing stage.
+            # Or just do it here, where it sets the state of the next query.
+            #
+            # The better idea is to separate up unification variable bins
+            # separated by ORs, using ands to unify within each bin.
+            chain = False
+            if binop == 'AND':                
+                logger.debug(" ANDing %s and %s", prev_functor, functor)
                 final_result = final_result and r[0]
             elif binop == 'OR':
+                chain = True
+                print(chain)
+                logger.debug(" ORing %s and %s", final_result, r[0])
                 final_result = final_result or r[0]
             elif binop == 'FIN':
+                chain = True
                 final_result = final_result and r[0]
-                break
-            else:
+                logger.debug(" FIN, Non-unified result: %s", final_result)
+            elif next_binop_comp is not None:
                 raise ValueError(f"Invalid binary operator {binop}")
+           
+            partial_results.append((r[0], r[1], chain))
+            if binop == 'FIN':
+                break
 
-        logger.debug("  Results: %s\tFinal=%s", partial_results, final_result)
+            next_binop_comp = binop
+            prev_functor = functor
     
         # Cross reference all variables used in goals. hack, TODO: unify
         final_variables = {}
-        for i, (result, variables) in enumerate(partial_results):
+        for i, (result, variables, _) in enumerate(partial_results):
             for key in variables:
-                for j, (result2, variables2) in enumerate(partial_results):
+                for j, (result2, variables2, chain) in enumerate(partial_results):
                     if i == j:
                         continue
                     if key in variables2:
-                        if variables[key] != variables2[key]:
+                        # TODO: This should be disable if we're ORing.
+                        print("Cross referencing", key, variables[key], variables2[key])
+                        if variables[key] != variables2[key] and not chain:
+                            logger.debug("\t\"Unification\" failed: %s != %s, OR: %s", variables[key], variables2[key], chain)
                             final_result = False
-                            final_variables = {key: f"Fail= !any({variables[key]} in {variables2[key]})"}
+                      
+                            if self.PASSTHROUGH_FAILURE_CONDITION:  
+                                final_variables = {key: f"Fail= !any({variables[key]} in {variables2[key]})"}
+                            elif self.CLEAR_FINAL_VARIABLES_ON_FAIL:
+                                final_variables = {}
+
                             break
             # Lets join all variables together for final output.
             if final_result:
                 final_variables.update(variables)
-        
+
+        logger.debug("  Results: %s\tFinal=%s", partial_results, final_result)
         return final_result, final_variables
 
 
