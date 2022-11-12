@@ -68,7 +68,6 @@ class KnowledgeEngine:
         final_result = True
         partial_results = []
 
-        prev_functor = None
         next_binop_comp = None
         for functor, args, binop in query:
             # check if and or 
@@ -77,47 +76,35 @@ class KnowledgeEngine:
             r = self.functor_query(functor, args)
             logger.debug("\tPartial result: %s", r)
 
-        
-            # TODO: I'm probably off by one here.
-            # Probably need to either move the AND, OR in the lexing stage.
-            # Or just do it here, where it sets the state of the next query.
-            #
-            # The better idea is to separate up unification variable bins
-            # separated by ORs, using ands to unify within each bin.
-            chain = False
-            if binop == 'AND':                
-                logger.debug(" ANDing %s and %s", prev_functor, functor)
-                final_result = final_result and r[0]
-            elif binop == 'OR':
-                chain = True
-                logger.debug(" ORing %s and %s", final_result, r[0])
-                final_result = final_result or r[0]
-            elif binop == 'FIN':
-                chain = True
-                final_result = final_result and r[0]
-                logger.debug(" FIN, Non-unified result: %s", final_result)
-            elif next_binop_comp is not None:
-                raise ValueError(f"Invalid binary operator {binop}")
-           
-            partial_results.append((r[0], r[1], chain))
+            partial_results.append((r[0], r[1], next_binop_comp))
             if binop == 'FIN':
                 break
 
             next_binop_comp = binop
-            prev_functor = functor
     
         # Cross reference all variables used in goals. hack, TODO: unify
         final_variables = {}
+        # TODO: Technically we can remove final result updates prior to this point and just
+        # chain here to make it.
         for i, (result, variables, _) in enumerate(partial_results):
             for key in variables:
-                for j, (result2, variables2, chain) in enumerate(partial_results):
+                for j, (result2, variables2, compose_op) in enumerate(partial_results):
                     if i == j:
                         continue
                     if key in variables2:
+                        if compose_op == 'AND' or compose_op == "FIN":
+                            r = result and result2
+                        elif compose_op == 'OR':
+                            r = result or result2
+                        final_result = final_result and r
+
+                        if compose_op == 'OR' and r or compose_op == None:
+                            break
+
                         # TODO: This should be disable if we're ORing.
                         logging.debug("\tCross referencing", key, variables[key], variables2[key])
-                        if variables[key] != variables2[key] and not chain:
-                            logger.debug("  \t\"Unification\" failed: %s != %s, OR: %s", variables[key], variables2[key], chain)
+                        if variables[key] != variables2[key]:
+                            logger.debug("  \t\"Unification\" failed: %s != %s, OR: %s", variables[key], variables2[key], compose_op)
                             final_result = False
                       
                             if self.PASSTHROUGH_FAILURE_CONDITION:  
@@ -128,7 +115,12 @@ class KnowledgeEngine:
                             break
             # Lets join all variables together for final output.
             if final_result:
-                final_variables.update(variables)
+                # merge variables into final_variables
+                for key in variables:
+                    if key not in final_variables:
+                        final_variables[key] = set(variables[key])
+                    else:
+                        final_variables[key].update(variables[key])
 
         logger.debug("  Results: %s\tFinal=%s", partial_results, final_result)
         return final_result, final_variables
