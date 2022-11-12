@@ -1,5 +1,5 @@
-from pyrology.engine.lib import KnowledgeEngine
-from pyrology.lexer import tokenstream
+from pyrology.engine.core import KnowledgeEngine
+from pyrology.engine.lexer import tokenstream
 from pyrology.utils import get_source
 
 

@@ -2,9 +2,10 @@ import logging
 import os
 import argparse
 
-from pyrology.engine.lib import InteractiveKernel, KnowledgeEngine
+from pyrology.engine.core import KnowledgeEngine
+from pyrology.engine.interactive import InteractiveKernel
 from pyrology.utils import get_source, load_tokens, write_tokens
-from pyrology.lexer import tokenstream
+from pyrology.engine.lexer import tokenstream
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
