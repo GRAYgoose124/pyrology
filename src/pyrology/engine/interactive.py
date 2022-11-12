@@ -33,8 +33,9 @@ class InteractiveKernel:
                 case 'cs' | 'constants':
                     print(self.engine.constants)
                 case 'rls' | 'rules':
-                    for name, body in self.engine.rules.items():
-                        print(f"  {name:<15}rule: {body['src']}.")
+                    for name, rules in self.engine.rules.items():
+                        for body in rules:
+                            print(f"  {name:<15}rule: {body['src']}.")
                 case 'rels' | 'relations':
                     for name, args in self.engine.relations.items():
                         print(f"  {name:<10}")

@@ -96,6 +96,7 @@ def tokenstream(source):
     #
     # This is by no means mean't to adhere to Prolog specs, rather it's
     # convenient that it does.
+    # TODO: Remove comments.
     statements = sanitized.split('.')
     rules = filter(lambda s: ':-' in s, statements)
     facts = list(filter(lambda s: ':-' not in s and s != '', statements))
@@ -112,7 +113,9 @@ def tokenstream(source):
         
         goals = rule_munch(body)
 
-        rule_tokens[name] = { 'src': rule, 'args': args, 'goals': goals }
+        if name not in rule_tokens:
+            rule_tokens[name] = []
+        rule_tokens[name].append({ 'src': rule, 'args': args, 'goals': goals })
 
     # Get all constants from facts.
     # We're assuming facts have NO variables.
