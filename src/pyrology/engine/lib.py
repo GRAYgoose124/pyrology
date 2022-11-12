@@ -1,5 +1,6 @@
 import logging
-from pyrology.utils import pretty_facts, pretty_query, pretty_rules
+from pyrology.lexer import tokenstream
+from pyrology.utils import get_source, pretty_facts, pretty_query, pretty_rules
 
 
 logger = logging.getLogger(__name__)
@@ -14,19 +15,33 @@ class InteractiveKernel:
         import readline
 
         while True:
-            query = input('query> ')
-  
+            try:
+                query = input('query> ')
+            except EOFError:
+                break
+            except KeyboardInterrupt:
+                print("User interrupted. Quitting...")
+                break
+
             match query:
                 case 'exit':
                     break
-                case 'facts':
+                case 'fs' | 'facts':
                     print(self.engine.facts)
-                case 'constants':
+                case 'cs' | 'constants':
                     print(self.engine.constants)
-                case 'rules':
+                case 'rls' | 'rules':
                     print(self.engine.rules)
-                case 'relations':
+                case 'rels' | 'relations':
                     print(self.engine.relations)
+                case 'h' | 'help':
+                    print('''\
+                    exit: exit the interactive shell
+                    fs: print the facts
+                    cs: print the constants
+                    rls: print the rules
+                    rels: print the relations
+                    h: print this help message''')
                 case _:
                     try:
                         f, e = query.split('(')
@@ -58,7 +73,13 @@ class KnowledgeEngine:
     If we cannot unify all Var tokens with constants, the goals cannot
     be satisfied, and we'll throw an error.
     """
-    def __init__(self, token_basis):
+    def __init__(self, path=None, token_basis=None):
+        if path is not None:
+            source = get_source(path)
+            token_basis = tokenstream(source)
+        elif token_basis is None:
+            raise ValueError("No source or token basis provided.")
+        
         # I believe we don't need to save a set of variables at this level.
         self.variables = set()
 

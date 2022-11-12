@@ -67,7 +67,7 @@ def main():
     parsed = pyrology_handle_args(parser)
     tokens = parsed['tokens']
 
-    engine = KnowledgeEngine(tokens)
+    engine = KnowledgeEngine(token_basis=tokens)
 
     cli = InteractiveKernel(engine)
     cli.run()
