@@ -9,7 +9,8 @@ def test_query_simple():
     q = "man(X)."
     r = engine.query(q)
 
-    assert(r[0] == True)
+    assert (r[0] == True)
+
 
 def test_query_or():
     engine = KnowledgeEngine(path="assets/test.pl")
@@ -17,7 +18,8 @@ def test_query_or():
     q = "man(X); woman(Y); man(Y)."
     r = engine.query(q)
 
-    assert(r[0] == True)
+    assert (r[0] == True)
+
 
 def test_query_and_or():
     engine = KnowledgeEngine(path="assets/test.pl")
@@ -25,18 +27,19 @@ def test_query_and_or():
     q = "man(X), woman(Y); man(Y)."
     r = engine.query(q)
 
-    assert(r[0] == True)
+    assert (r[0] == True)
+
 
 def test_query_unify_fail():
     engine = KnowledgeEngine(path="assets/test.pl")
 
     q = "man(X), woman(X)."
     r = engine.query(q)
-    assert(r[0] == False)
+    assert (r[0] == False)
 
     q = "man(Y); woman(X), man(X)."
     r = engine.query(q)
-    assert(r[0] == False)
+    assert (r[0] == False)
 
 
 def test_query_unify_pass():
@@ -44,8 +47,8 @@ def test_query_unify_pass():
 
     q = "man(X); woman(X)."
     r = engine.query(q)
-    assert(r[0] == True)
+    assert (r[0] == True)
 
     q = "man(X), woman(Y)."
     r = engine.query(q)
-    assert(r[0] == True)
+    assert (r[0] == True)

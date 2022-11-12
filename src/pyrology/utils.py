@@ -14,6 +14,7 @@ def load_tokens(path):
     with open(path) as f:
         return yaml.load(f, Loader=yaml.FullLoader)
 
+
 def write_tokens(tokens, filename):
     """Write tokens to a file and returns the YAML object."""
     if not os.path.exists("output"):
@@ -24,6 +25,7 @@ def write_tokens(tokens, filename):
         f.write(yml)
 
     return yml
+
 
 def get_source(path):
     if os.path.exists(path):
@@ -42,17 +44,19 @@ def attempt_take_as_binop(term):
     else:
         return term
 
+
 def get_functor(term):
     try:
         functor, args = term.split('(', 1)
     except ValueError as e:
         print(f"Invalid term: {term}")
-        return None 
-        
+        return None
+
     args = args.split(')')[0].split(',')
     logger.debug(f"Functor: {functor}, Args: {args}")
 
     return functor, args
+
 
 def get_name(functor, args):
     arity = len(args)
@@ -66,6 +70,7 @@ def pretty_facts(engine):
         for fact in facts:
             print(f'{term}({", ".join(fact)})')
     print()
+
 
 def pretty_fquery(engine, functor, entities):
     result, results = engine.functor_query(functor, entities)

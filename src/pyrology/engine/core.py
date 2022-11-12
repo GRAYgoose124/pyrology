@@ -29,6 +29,7 @@ class KnowledgeEngine:
     If we cannot unify all Var tokens with constants, the goals cannot
     be satisfied, and we'll throw an error.
     """
+
     def __init__(self, path=None, token_basis=None, interactive=False):
         if path is not None:
             source = get_source(path)
@@ -37,20 +38,21 @@ class KnowledgeEngine:
             raise ValueError("No source or token basis provided.")
         elif interactive:
             token_basis = {
-                # 'variables': variables, # We don't store variables here because we perform unification 
+                # 'variables': variables, # We don't store variables here because we perform unification
                 #                         # at runtime on local spaces.
                 'constants': set(),
                 'relations': {},
                 'rules': {},
             }
 
-
         self.constants = token_basis['constants']
         self.rules = token_basis['rules']
 
-        self.relations = token_basis['relations']# token_basis['facts'] # Deprecate in facvor of relations?
-        logger.info("Engine initialized with %s constants, %s rules, and %s relations/facts.", len(self.constants), len(self.rules), len(self.relations))
-    
+        # token_basis['facts'] # Deprecate in facvor of relations?
+        self.relations = token_basis['relations']
+        logger.info("Engine initialized with %s constants, %s rules, and %s relations/facts.",
+                    len(self.constants), len(self.rules), len(self.relations))
+
     def unify_bins(self, bins):
         unified = True
         final_variables = {}
@@ -65,11 +67,13 @@ class KnowledgeEngine:
                             # TODO: This should be disable if we're ORing.
                             logger.debug("\tCross referencing %s", key)
                             if variables[key] != variables2[key]:
-                                logger.debug("  \t\"Unification\" failed: %s != %s", variables[key], variables2[key])
+                                logger.debug(
+                                    "  \t\"Unification\" failed: %s != %s", variables[key], variables2[key])
                                 unified = False
-                        
-                                if self.PASSTHROUGH_FAILURE_CONDITION:  
-                                    final_variables = {key: f"Fail= !any({variables[key]} in {variables2[key]})"}
+
+                                if self.PASSTHROUGH_FAILURE_CONDITION:
+                                    final_variables = {
+                                        key: f"Fail= !any({variables[key]} in {variables2[key]})"}
                                 elif self.CLEAR_FINAL_VARIABLES_ON_FAIL:
                                     final_variables = {}
 
@@ -96,8 +100,8 @@ class KnowledgeEngine:
         input_string = input_string.replace(" ", "")
 
         query = rule_munch(input_string)
-        logger.debug('CLIQuery: %s from %s', query , input_string)
-        
+        logger.debug('CLIQuery: %s from %s', query, input_string)
+
         # Check relational queries.
         final_result = None
         partial_res_sets = []
@@ -105,8 +109,9 @@ class KnowledgeEngine:
 
         prev_binop_comp = None
         for functor, args, binop in query:
-            # check if and or 
-            logger.debug("  Next goal: %s(%s) %s", functor, ', '.join(args), query)
+            # check if and or
+            logger.debug("  Next goal: %s(%s) %s",
+                         functor, ', '.join(args), query)
 
             r = self.functor_query(functor, args)
             logger.debug("\tPartial result: %s", r)
@@ -119,7 +124,7 @@ class KnowledgeEngine:
                 final_result = final_result and r[0]
             elif prev_binop_comp is None:
                 final_result = r[0]
-            
+
             logger.debug("\tFinal result: %s, %s", final_result, r[0])
 
             partial_results.append((r[0], r[1]))
@@ -127,17 +132,17 @@ class KnowledgeEngine:
                 break
 
             prev_binop_comp = binop
-    
+
         # Cross reference all variables used in goals. hack, TODO: unify
         # TODO: Technically we can remove final result updates prior to this point and just
         # chain here to make it.
-        unify_result, final_variables = self.unify_bins(partial_res_sets + [partial_results])
+        unify_result, final_variables = self.unify_bins(
+            partial_res_sets + [partial_results])
 
         final_result = final_result and unify_result
 
         logger.debug("  Results: %s\tFinal=%s", partial_results, final_result)
         return final_result, final_variables
-
 
     def functor_query(self, functor, entities):
         results = {}
@@ -167,15 +172,17 @@ class KnowledgeEngine:
                 elif e == e2:
                     if e not in constant_matches:
                         constant_matches.append(e)
-                    logger.debug("\t\t\t\tMatched %s to %s | %s", e, e2, results)
+                    logger.debug("\t\t\t\tMatched %s to %s | %s",
+                                 e, e2, results)
                 else:
-                    logger.debug("\t\t\t\tFailed to match %s to %s | %s", e, e2, results)
+                    logger.debug(
+                        "\t\t\t\tFailed to match %s to %s | %s", e, e2, results)
 
         # checkk if all variables have been matched
         for e in entities:
             if e[0].isupper() and e not in results:
                 return False, results
-            
+
             # check if all constants are equal
             if e[0].islower() and e not in constant_matches:
                 return False, results

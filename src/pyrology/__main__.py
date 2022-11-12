@@ -8,16 +8,22 @@ from pyrology.utils import get_source, load_tokens, write_tokens
 from pyrology.engine.lexer import tokenstream
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO, format='\t| %(name)s:%(levelname)s >\t%(message)s')
+logging.basicConfig(level=logging.INFO,
+                    format='\t| %(name)s:%(levelname)s >\t%(message)s')
 
 
 def argparser():
     parser = argparse.ArgumentParser(description="Tokenize a source file.")
-    parser.add_argument('script', nargs='?', type=str, default=None, help="The source file to tokenize.")
-    parser.add_argument('--tokens', type=str, default=None, help="The token file to load into the parser-engine.")
-    parser.add_argument('--save-tokens', default=True, action='store_true', help="Save the token file.")
-    parser.add_argument('--no-save-tokens', dest='save_tokens', action='store_false', help="Don't save the token file.")
-    parser.add_argument('--debug', default=False, action='store_true', help="Enable debug mode.")
+    parser.add_argument('script', nargs='?', type=str,
+                        default=None, help="The source file to tokenize.")
+    parser.add_argument('--tokens', type=str, default=None,
+                        help="The token file to load into the parser-engine.")
+    parser.add_argument('--save-tokens', default=True,
+                        action='store_true', help="Save the token file.")
+    parser.add_argument('--no-save-tokens', dest='save_tokens',
+                        action='store_false', help="Don't save the token file.")
+    parser.add_argument('--debug', default=False,
+                        action='store_true', help="Enable debug mode.")
     return parser
 
 
@@ -57,7 +63,7 @@ def pyrology_handle_args(parser):
     return {
         'input_file': path,
         'source': source,
-        'tokens': tokens, 
+        'tokens': tokens,
         'tokens_yml': yml,
         'tokens_path': token_output_file
     }
@@ -74,6 +80,6 @@ def main():
 
     cli.run()
 
-    
+
 if __name__ == "__main__":
     main()

@@ -16,6 +16,9 @@ Too bad, here you go. 🦴🦴🦴
     # poetry shell # if you want a virtual env
     poetry install
 
+## Testing
+    $ pytest
+    
 ## Running
 After installing, try
 

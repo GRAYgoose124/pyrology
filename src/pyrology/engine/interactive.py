@@ -4,7 +4,8 @@ from pyrology.utils import pretty_fquery
 
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG, format='\t| %(name)s:%(levelname)s >\t%(message)s')
+logging.basicConfig(level=logging.DEBUG,
+                    format='\t| %(name)s:%(levelname)s >\t%(message)s')
 
 
 class InteractiveKernel:
@@ -59,7 +60,7 @@ class InteractiveKernel:
                         except ValueError:
                             print("Invalid query, try again.")
                             continue
-                        
+
                         logger.debug("Query: %s = (%s, %s)", query, f, e)
                         pretty_fquery(self.engine, f, e)
                     else:

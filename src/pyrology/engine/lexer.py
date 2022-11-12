@@ -42,28 +42,28 @@ def rule_munch(body):
                 ty = 'OR'
         # Finally, if there are no commas or semicolons, break.
         else:
-            if body: # Gotta be honest, is this check necessary?
+            if body:  # Gotta be honest, is this check necessary?
                 body = attempt_take_as_binop(body)
                 try:
-                    functor, args = get_functor(body) 
+                    functor, args = get_functor(body)
                     name = get_name(functor, args)
                     # TODO: Should append this on '.' instead.
-                    goals.append([name, args, "FIN"]) # Super dupes!!
+                    goals.append([name, args, "FIN"])  # Super dupes!!
                 # This is accounting for infix binary ops, which are not functors???
                 except AttributeError:
                     goals.append([body, None, "FIN"])
             break
-        
+
         # Every iteration, we're splitting t:tt, this is you're classic
         # token munching algo.
         head, body = body[:split], body[split+1:]
 
         # However this "lexer" works, we've decided just to try to parse every goal
-        # as a binary operation at some point. 
-        # 
-        # I guess that works? 
+        # as a binary operation at some point.
+        #
+        # I guess that works?
         head = attempt_take_as_binop(head)
-        functor, args = get_functor(head) # Duplicated?
+        functor, args = get_functor(head)  # Duplicated?
         name = get_name(functor, args)
         goals.append([name, args, ty])
 
@@ -84,15 +84,16 @@ def tokenstream(source):
 
     The global constant dictionary is created from the set of all
     lowercase `functor(a1, a2, a3[, ...])` tokens in the source str. 
-    
+
     Constants are used as unique types for the parser-engine.
 
     relation(atom, <...>).
     rule(VARIABLE, <...>) :- relation(VARIABLE, <...>)[;,] <...>.
     """
     # Who needs whitespace? Lets just sanitize anything we're not *expecting*.
-    sanitized = ''.join([c for c in source if c.isalpha() or c.isdigit() or c in ''.join(TOKENS)])
-    
+    sanitized = ''.join([c for c in source if c.isalpha()
+                        or c.isdigit() or c in ''.join(TOKENS)])
+
     # Well, I guess individual statements are separated by periods.
     #
     # This is by no means mean't to adhere to Prolog specs, rather it's
@@ -105,23 +106,23 @@ def tokenstream(source):
     # Generate rule tokens.
     #
     # Let's assume that sources are well-formed, and that rules are merely
-    # a sequenece of goals separated by commas and semicolons. 
+    # a sequenece of goals separated by commas and semicolons.
     rule_tokens = {}
     for rule in rules:
         head, body = rule.split(':-')
         functor, args = get_functor(head)
         name = get_name(functor, args)
-        
+
         goals = rule_munch(body)
 
         if name not in rule_tokens:
             rule_tokens[name] = []
-        rule_tokens[name].append({ 'src': rule, 'args': args, 'goals': goals })
+        rule_tokens[name].append({'src': rule, 'args': args, 'goals': goals})
 
     # Get all constants from facts.
     # We're assuming facts have NO variables.
     # git
-    # Queries are effectively facts with variables, but they are handled at 
+    # Queries are effectively facts with variables, but they are handled at
     # runtime, thus separately.
     constants = set()
     relations = {}
@@ -131,15 +132,14 @@ def tokenstream(source):
             functor, args = get_functor(fact)
             name = get_name(functor, args)
         except TypeError:
-            continue # Or break - phantom term is coming up.
+            continue  # Or break - phantom term is coming up.
         if name not in relations:
             relations[name] = []
         relations[name].append(args)
         constants.update(args)
 
-
     return {
-        # 'variables': variables, # We don't store variables here because we perform unification 
+        # 'variables': variables, # We don't store variables here because we perform unification
         #                         # at runtime on local spaces.
         'constants': constants,
 
@@ -151,7 +151,8 @@ def tokenstream(source):
 
 def main():
     parser = argparse.ArgumentParser(description="Tokenize a source file.")
-    parser.add_argument('script', type=str, help="The source file to tokenize.")
+    parser.add_argument('script', type=str,
+                        help="The source file to tokenize.")
     args = parser.parse_args()
 
     path = args.script
