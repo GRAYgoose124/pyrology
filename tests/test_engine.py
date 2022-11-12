@@ -1,6 +1,4 @@
 from pyrology.engine.core import KnowledgeEngine
-from pyrology.engine.lexer import tokenstream
-from pyrology.utils import get_source
 
 
 def test_query_simple():

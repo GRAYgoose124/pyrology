@@ -66,5 +66,6 @@ class InteractiveKernel:
                     else:
                         result = self.engine.query(query)
                         print(result[0])
-                        for key, value in result[1].items():
-                            print(f"\t{key}: {value}")
+                        for r in result[1]:
+                            for key, value in r.items():
+                                print(f"\t{key}: {value}")

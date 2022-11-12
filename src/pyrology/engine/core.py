@@ -55,12 +55,14 @@ class KnowledgeEngine:
 
     def unify_bins(self, bins):
         unified = True
-        final_variables = {}
+        final_variables = []
 
         for partial_results in bins:
-            for i, (result, variables) in enumerate(partial_results):
+            partial_variables = {}
+
+            for i, (_, variables) in enumerate(partial_results):
                 for key in variables:
-                    for j, (result2, variables2) in enumerate(partial_results):
+                    for j, (_, variables2) in enumerate(partial_results):
                         if i == j:
                             continue
                         if key in variables2:
@@ -72,20 +74,22 @@ class KnowledgeEngine:
                                 unified = False
 
                                 if self.PASSTHROUGH_FAILURE_CONDITION:
-                                    final_variables = {
+                                    partial_variables = {
                                         key: f"Fail= !any({variables[key]} in {variables2[key]})"}
                                 elif self.CLEAR_FINAL_VARIABLES_ON_FAIL:
-                                    final_variables = {}
+                                    partial_variables = {}
 
                                 break
                 # Lets join all variables together for final output.
                 if unified:
                     # merge variables into final_variables
                     for key in variables:
-                        if key not in final_variables:
-                            final_variables[key] = set(variables[key])
+                        if key not in partial_variables:
+                            partial_variables[key] = set(variables[key])
                         else:
-                            final_variables[key].update(variables[key])
+                            partial_variables[key].update(variables[key])
+
+            final_variables.append(partial_variables)
 
         return unified, final_variables
 
