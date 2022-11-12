@@ -1,9 +1,42 @@
 import logging
-from pyrology.utils import pretty_facts, pretty_query, get_query, pretty_rules
+from pyrology.utils import pretty_facts, pretty_query, pretty_rules
 
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG, format='\t| %(name)s:%(levelname)s >\t%(message)s')
+
+
+class InteractiveKernel:
+    def __init__(self, engine):
+        self.engine = engine
+
+    def run(self):
+        import readline
+
+        while True:
+            query = input('query> ')
+  
+            match query:
+                case 'exit':
+                    break
+                case 'facts':
+                    print(self.engine.facts)
+                case 'constants':
+                    print(self.engine.constants)
+                case 'rules':
+                    print(self.engine.rules)
+                case 'relations':
+                    print(self.engine.relations)
+                case _:
+                    try:
+                        f, e = query.split('(')
+                        e = [x.strip() for x in e[:-2].split(',')]
+                    except ValueError:
+                        print("Invalid query, try again.")
+                        continue
+                    
+                    logger.debug("Query: %s = (%s, %s)", query, f, e)
+                    pretty_query(self.engine, f, e)
 
 
 class KnowledgeEngine:
@@ -16,8 +49,6 @@ class KnowledgeEngine:
     - Unification is the process of finding a substitution that makes two terms 
     equal.
 
-
-
     Runtime !~!TODO!~!
     In the unification stage, we'll attempt to unify each Var token
     with a constant token, and if that fails, we'll attempt to unify
@@ -27,15 +58,15 @@ class KnowledgeEngine:
     If we cannot unify all Var tokens with constants, the goals cannot
     be satisfied, and we'll throw an error.
     """
-    def __init__(self, basis):
+    def __init__(self, token_basis):
         # I believe we don't need to save a set of variables at this level.
         self.variables = set()
 
-        self.constants = basis['constants']
-        self.rules = basis['rules']
-        self.relations = basis['relations'] 
+        self.constants = token_basis['constants']
+        self.rules = token_basis['rules']
+        self.relations = token_basis['relations'] 
 
-        self.facts = basis['facts'] # Deprecate in facvor of relations?
+        self.facts = token_basis['facts'] # Deprecate in facvor of relations?
 
     def query(self, functor, entities):
         results = {}

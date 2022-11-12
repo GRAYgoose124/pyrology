@@ -50,7 +50,7 @@ def get_functor(term):
         return None 
         
     args = args.split(')')[0].split(',')
-    logger.debug(term, '->', f"functor={functor}, args={args}")
+    logger.debug(f"Functor: {functor}, Args: {args}")
 
     return functor, args
 
@@ -83,16 +83,3 @@ def pretty_query(engine, functor, entities):
     else:
         print("False")
     print()
-
-
-def get_query():
-    while True:
-        query = input('query> ')
-        match query:
-            case 'quit':
-                return None
-        
-        f, e = query.split('(')
-        e = [x.strip() for x in e[:-1].split(',')]
-
-        yield f, e

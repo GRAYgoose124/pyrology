@@ -2,7 +2,7 @@ import logging
 import os
 import argparse
 
-from pyrology.engine.lib import KnowledgeEngine
+from pyrology.engine.lib import InteractiveKernel, KnowledgeEngine
 from pyrology.utils import get_source, load_tokens, write_tokens
 from pyrology.lexer import tokenstream
 
@@ -15,12 +15,16 @@ def argparser():
     parser.add_argument('script', nargs='?', type=str, default=None, help="The source file to tokenize.")
     parser.add_argument('--tokens', type=str, default=None, help="The token file to load into the parser-engine.")
     parser.add_argument('--save-tokens', default=True, action='store_true', help="Save the token file.")
-
+    parser.add_argument('--no-save-tokens', dest='save_tokens', action='store_false', help="Don't save the token file.")
+    parser.add_argument('--debug', default=False, action='store_true', help="Enable debug mode.")
     return parser
 
 
 def pyrology_handle_args(parser):
     args = parser.parse_args()
+
+    if args.debug:
+        logging.getLogger().setLevel(logging.DEBUG)
 
     if args.tokens is not None:
         path = args.tokens
@@ -56,6 +60,7 @@ def pyrology_handle_args(parser):
         'tokens_path': token_output_file
     }
 
+
 def main():
     parser = argparser()
 
@@ -64,7 +69,9 @@ def main():
 
     engine = KnowledgeEngine(tokens)
 
-    
+    cli = InteractiveKernel(engine)
+    cli.run()
 
+    
 if __name__ == "__main__":
     main()
