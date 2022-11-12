@@ -19,5 +19,4 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 futa = "pyrology.__main__:main"
-engi = "pyrology.engine:main"
 lexer = "pyrology.lexer:main"

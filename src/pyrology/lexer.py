@@ -58,7 +58,7 @@ def rule_munch(body):
 
 
 def tokenstream(source):
-    """Get the rules and facts from a source file.
+    """Get the rules and facts from a source str.
     
         All ye who enter here, just **beware**
 
@@ -69,7 +69,7 @@ def tokenstream(source):
         We have rules and facts, and we tokenize them in separate passes.
 
         The global constant dictionary is created from the set of all
-        lowercase `\w+(.*)` tokens in the source file. This is used to
+        lowercase `\w+(.*)` tokens in the source str. This is used to
         determine a token's typeness, as constants are considered unique 
         newtypes.
 
@@ -114,7 +114,11 @@ def tokenstream(source):
     # runtime, thus separately.
     constants = set()
     for fact in facts:
-        functor, args = get_functor(fact)
+        # print (fact, get_functor(fact))
+        try:
+            functor, args = get_functor(fact)
+        except TypeError:
+            continue # Or break - phantom term is coming up.
         constants.update(args)
 
 

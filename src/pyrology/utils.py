@@ -34,8 +34,14 @@ def attempt_take_as_binop(term):
         return term
 
 def get_functor(term):
-    functor, args = term.split('(', 1)
+    try:
+       functor, args = term.split('(', 1)
+    except ValueError as e:
+        print(f"Invalid term: {term}")
+        return None 
+        
     args = args.split(')')[0].split(',')
+    print(term, '->', f"functor={functor}, args={args}")
 
     return functor, args
 
