@@ -5,7 +5,7 @@ import argparse
 from pyrology.engine.core import KnowledgeEngine
 from pyrology.engine.interactive import InteractiveKernel
 from pyrology.utils import get_source, load_tokens, write_tokens
-from pyrology.engine.lexer import tokenstream
+from pyrology.engine.lexer.__main__ import IgnisTokenizer
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.CRITICAL + 1,
@@ -32,6 +32,7 @@ def argparser():
 
 def pyrology_handle_args(parser):
     args = parser.parse_args()
+    tokenizer = IgnisTokenizer()
 
     if args.debug:
         logging.getLogger().setLevel(logging.DEBUG)
@@ -44,15 +45,14 @@ def pyrology_handle_args(parser):
     if args.tokens is not None:
         path = args.tokens
         source = None
-
-        tokens = load_tokens(path)
-
+        tokenizer.load_tokens(path)
+            
         logger.info('Loaded tokens from %s', path)
     elif args.script is not None:
         path = args.script
         source = get_source(path)
+        tokenizer.prepare(source)
 
-        tokens = tokenstream(source)
         logger.debug('\tTokenized %s', path)
     else:
         logger.error("No script or tokens provided.")
@@ -62,7 +62,7 @@ def pyrology_handle_args(parser):
     if args.save_tokens:
         token_output_file = os.path.basename(path).split('.')[0]
         token_output_file = f"output/{token_output_file}.yml"
-        yml = write_tokens(tokens, token_output_file)
+        yml = write_tokens(tokenizer.get_tokens(), token_output_file)
         logger.debug('\tSaved `%s` tokens to `%s`', path, token_output_file)
     else:
         token_output_file = None
@@ -71,7 +71,7 @@ def pyrology_handle_args(parser):
     return {
         'input_file': path,
         'source': source,
-        'tokens': tokens,
+        'tokenizer': tokenizer,
         'tokens_yml': yml,
         'tokens_path': token_output_file
     }
@@ -81,9 +81,8 @@ def main():
     parser = argparser()
 
     parsed = pyrology_handle_args(parser)
-    tokens = parsed['tokens']
 
-    engine = KnowledgeEngine(token_basis=tokens)
+    engine = KnowledgeEngine(tokenizer=parsed['tokenizer'], interactive=True)
     cli = InteractiveKernel(engine)
 
     cli.run()

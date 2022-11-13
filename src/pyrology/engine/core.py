@@ -1,6 +1,7 @@
 import logging
 import queue
-from pyrology.engine.lexer import rule_munch, tokenstream
+from pyrology.engine.lexer.__main__ import IgnisTokenizer
+from pyrology.engine.lexer.utils import rule_munch
 from pyrology.utils import get_source
 
 
@@ -30,32 +31,24 @@ class KnowledgeEngine:
     be satisfied, and we'll throw an error.
     """
 
-    def __init__(self, path=None, token_basis=None, interactive=False):
+    def __init__(self, tokenizer=None, path=None, token_basis=None, interactive=False):
+        if tokenizer is None:
+            self.tokenizer = IgnisTokenizer()
+        else:
+            self.tokenizer = tokenizer
+            
         if path is not None:
             source = get_source(path)
-            token_basis = tokenstream(source)
+            token_basis = self.tokenizer.prepare(source)
         elif token_basis is None and not interactive:
             raise ValueError("No source or token basis provided.")
         elif interactive:
-            token_basis = {
-                # 'variables': variables, # We don't store variables here because we perform unification
-                #                         # at runtime on local spaces.
-                'constants': set(),
-                'relations': {},
-                'rules': {},
-            }
+            self.tokenizer.prepare()
 
-        self.constants = token_basis['constants']
-        self.rules = token_basis['rules']
-
-        self.relations = token_basis['relations']
         logger.info(" - Initialized with %s constants, %s rules, and %s relations.",
-                    len(self.constants), len(self.rules), len(self.relations))
+                    len(self.tokenizer.constants), len(self.tokenizer.rules), len(self.tokenizer.relations))
 
-    def add_rule(self, name, body):
-        pass
-
-    def functor_query(self, functor, entities):
+    def _single_query(self, functor, entities):
         results = {}
         constant_matches = []
         if '/' in functor and functor.split('/')[1].isnumeric():
@@ -64,11 +57,11 @@ class KnowledgeEngine:
             term = f"{functor}/{len(entities)}"
 
         logger.debug(f"\t  Querying {term}...")
-        if term not in self.relations:
+        if term not in self.tokenizer.relations:
             logger.debug(f"\t\t{term} not in facts.")
             return False, results
 
-        for fact in self.relations[term]:
+        for fact in self.tokenizer.relations[term]:
             logger.debug(f"\tChecking {term}({', '.join(fact)})")
 
             args = list(zip(entities, fact))
@@ -100,7 +93,7 @@ class KnowledgeEngine:
 
         return True, results
 
-    def unify_bins(self, bins):
+    def _unify_bins(self, bins):
         unified = True
         final_variables = []
 
@@ -138,7 +131,7 @@ class KnowledgeEngine:
 
             final_variables.append(partial_variables)
 
-        # Finally, we'll join all variables together.
+        # TODO: Finally, we'll join all variables together.
         return unified, final_variables
 
     def query(self, input_string):
@@ -165,7 +158,7 @@ class KnowledgeEngine:
             logger.debug("  Next goal: %s(%s) %s",
                          functor, ', '.join(args), query)
 
-            r = self.functor_query(functor, args)
+            r = self._single_query(functor, args)
             logger.debug("\tPartial result: %s", r)
 
             if prev_binop_comp == 'OR':
@@ -188,7 +181,7 @@ class KnowledgeEngine:
         # Cross reference all variables used in goals. hack, TODO: unify
         # TODO: Technically we can remove final result updates prior to this point and just
         # chain here to make it.
-        unify_result, final_variables = self.unify_bins(
+        unify_result, final_variables = self._unify_bins(
             partial_res_sets + [partial_results])
 
         final_result = final_result and unify_result

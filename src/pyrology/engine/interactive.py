@@ -1,6 +1,6 @@
 import logging
 from pyrology.engine.core import KnowledgeEngine
-from pyrology.engine.lexer import parse_rule
+from pyrology.engine.lexer.utils import parse_rule
 
 
 logger = logging.getLogger(__name__)
@@ -15,10 +15,6 @@ class InteractiveKernel:
 
         self.engine = engine
 
-    def add_rule(self, rule):
-        r = parse_rule(rule)
-        self.engine.add_rule(*r)
-
     def handle_query(self, query):
         result = self.engine.query(query)
         print(result[0])
@@ -27,35 +23,34 @@ class InteractiveKernel:
             for key, value in r.items():
                 print(f"\t{key}: {value}")
             print()
-        print()
 
     def cli_prompt(self):
         q = input('?- ')
 
         match q:
-            case 'exit':
+            case 'exit' | 'quit' | '!q':
                 return False
-            case 'cs' | 'constants':
-                print(" ".join(self.engine.constants))
-            case 'rls' | 'rules':
-                for name, rules in self.engine.rules.items():
+            case '!c' | 'constants':
+                print(" ".join(self.engine.tokenizer.constants))
+            case '!g' | 'rules':
+                for name, rules in self.engine.tokenizer.rules.items():
                     for body in rules:
                         print(f"  {name:<15}rule: {body['src']}.")
-            case 'rels' | 'relations':
-                for name, args in self.engine.relations.items():
+            case '!r' | 'relations':
+                for name, args in self.engine.tokenizer.relations.items():
                     print(f"  {name:<10}")
                     args = [print(f"\t" + ', '.join(arg)) for arg in args]
-            case 'h' | 'help':
+            case '?' | '!h' | 'help':
                 print('''\
-                exit: exit the interactive shell
-                cs: print the constants
-                rls: print the rules
-                rels: print the relations
-                h: print this help message''')
+                !q, exit: exit the interactive shell
+                !c: print the constants
+                !g: print the rules
+                !r: print the relations
+                ?, help: print this help message''')
             # Otherwise, assume it's a query.
             case _:
                 if ':-' in q:
-                    self.add_rule(q)
+                    self.engine.tokenizer.add_rule(q)
                 else:
                     self.handle_query(q)
 
@@ -69,9 +64,10 @@ class InteractiveKernel:
         logger.info("For help, please enter `?- help` for more information.")
         logger.info("")
 
-        while True:
+        keep_running = True
+        while keep_running:
             try:
-                self.cli_prompt()
+                keep_running = self.cli_prompt()
             except EOFError:
                 break
             except KeyboardInterrupt:
