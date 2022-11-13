@@ -48,10 +48,57 @@ class KnowledgeEngine:
         self.constants = token_basis['constants']
         self.rules = token_basis['rules']
 
-        # token_basis['facts'] # Deprecate in facvor of relations?
         self.relations = token_basis['relations']
         logger.info(" - Initialized with %s constants, %s rules, and %s relations.",
                     len(self.constants), len(self.rules), len(self.relations))
+
+    def add_rule(self, name, body):
+        pass
+
+    def functor_query(self, functor, entities):
+        results = {}
+        constant_matches = []
+        if '/' in functor and functor.split('/')[1].isnumeric():
+            term = functor
+        else:
+            term = f"{functor}/{len(entities)}"
+
+        logger.debug(f"\t  Querying {term}...")
+        if term not in self.relations:
+            logger.debug(f"\t\t{term} not in facts.")
+            return False, results
+
+        for fact in self.relations[term]:
+            logger.debug(f"\tChecking {term}({', '.join(fact)})")
+
+            args = list(zip(entities, fact))
+            logger.debug(f"\t\t  Args: {list(args)}")
+            for e, e2 in args:
+                logger.debug("\t\t\t Comparing %s to %s", e, e2)
+
+                if e[0].isupper():
+                    if e not in results:
+                        results[e] = []
+                    results[e].append(e2)
+                elif e == e2:
+                    if e not in constant_matches:
+                        constant_matches.append(e)
+                    logger.debug("\t\t\t\tMatched %s to %s | %s",
+                                e, e2, results)
+                else:
+                    logger.debug(
+                        "\t\t\t\tFailed to match %s to %s | %s", e, e2, results)
+
+        # checkk if all variables have been matched
+        for e in entities:
+            if e[0].isupper() and e not in results:
+                return False, results
+
+            # check if all constants are equal
+            if e[0].islower() and e not in constant_matches:
+                return False, results
+
+        return True, results
 
     def unify_bins(self, bins):
         unified = True
@@ -82,7 +129,7 @@ class KnowledgeEngine:
                                 break
                 # Lets join all variables together for final output.
                 if unified:
-                    # merge variables into final_variables
+                    # merge variables into partial_varaibles
                     for key in variables:
                         if key not in partial_variables:
                             partial_variables[key] = set(variables[key])
@@ -91,6 +138,7 @@ class KnowledgeEngine:
 
             final_variables.append(partial_variables)
 
+        # Finally, we'll join all variables together.
         return unified, final_variables
 
     def query(self, input_string):
@@ -147,48 +195,3 @@ class KnowledgeEngine:
 
         logger.debug("  Results: %s\tFinal=%s", partial_results, final_result)
         return final_result, final_variables
-
-    def functor_query(self, functor, entities):
-        results = {}
-        constant_matches = []
-        if '/' in functor and functor.split('/')[1].isnumeric():
-            term = functor
-        else:
-            term = f"{functor}/{len(entities)}"
-
-        logger.debug(f"\t  Querying {term}...")
-        if term not in self.relations:
-            logger.debug(f"\t\t{term} not in facts.")
-            return False, results
-
-        for fact in self.relations[term]:
-            logger.debug(f"\tChecking {term}({', '.join(fact)})")
-
-            args = list(zip(entities, fact))
-            logger.debug(f"\t\t  Args: {list(args)}")
-            for e, e2 in args:
-                logger.debug("\t\t\t Comparing %s to %s", e, e2)
-
-                if e[0].isupper():
-                    if e not in results:
-                        results[e] = []
-                    results[e].append(e2)
-                elif e == e2:
-                    if e not in constant_matches:
-                        constant_matches.append(e)
-                    logger.debug("\t\t\t\tMatched %s to %s | %s",
-                                 e, e2, results)
-                else:
-                    logger.debug(
-                        "\t\t\t\tFailed to match %s to %s | %s", e, e2, results)
-
-        # checkk if all variables have been matched
-        for e in entities:
-            if e[0].isupper() and e not in results:
-                return False, results
-
-            # check if all constants are equal
-            if e[0].islower() and e not in constant_matches:
-                return False, results
-
-        return True, results

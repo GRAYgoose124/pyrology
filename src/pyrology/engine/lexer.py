@@ -69,6 +69,45 @@ def rule_munch(body):
 
     return goals
 
+def sanitize_src(source):
+    # Filter comments
+    source = "\n".join([notcomment for notcomment in filter(lambda s: not s.startswith('%'), source.split('\n'))])
+
+    # Filter non-whitelisted characters.
+    sanitized = ''.join([c for c in source if c.isalpha()
+                        or c.isdigit() or c in ''.join(TOKENS)])
+
+    return sanitized
+
+def parse_rule(rule):
+    head, body = rule.split(':-')
+    functor, args = get_functor(head)
+    name = get_name(functor, args)
+
+    goals = rule_munch(body)
+
+    return name, args, goals
+
+def add_rule(rule, rule_tokens):
+    name, args, goals = parse_rule(rule)
+
+    if name not in rule_tokens:
+        rule_tokens[name] = []
+
+    rule_tokens[name].append({'src': rule, 'args': args, 'goals': goals})
+
+def add_fact(fact, relations, constants):
+    try:
+        functor, args = get_functor(fact)
+        name = get_name(functor, args)
+    except TypeError:
+        return  # Or break - phantom term is coming up.
+
+    if name not in relations:
+        relations[name] = []
+
+    relations[name].append(args)
+    constants.update(args)
 
 def tokenstream(source):
     """
@@ -90,61 +129,23 @@ def tokenstream(source):
     relation(atom, <...>).
     rule(VARIABLE, <...>) :- relation(VARIABLE, <...>)[;,] <...>.
     """
-    # Who needs whitespace? Lets just sanitize anything we're not *expecting*.
-    sanitized = ''.join([c for c in source if c.isalpha()
-                        or c.isdigit() or c in ''.join(TOKENS)])
-
-    # Well, I guess individual statements are separated by periods.
-    #
-    # This is by no means mean't to adhere to Prolog specs, rather it's
-    # convenient that it does.
-    # TODO: Remove comments.
+    sanitized = sanitize_src(source)
     statements = sanitized.split('.')
-    rules = filter(lambda s: ':-' in s, statements)
-    facts = list(filter(lambda s: ':-' not in s and s != '', statements))
 
     # Generate rule tokens.
-    #
-    # Let's assume that sources are well-formed, and that rules are merely
-    # a sequenece of goals separated by commas and semicolons.
     rule_tokens = {}
-    for rule in rules:
-        head, body = rule.split(':-')
-        functor, args = get_functor(head)
-        name = get_name(functor, args)
-
-        goals = rule_munch(body)
-
-        if name not in rule_tokens:
-            rule_tokens[name] = []
-        rule_tokens[name].append({'src': rule, 'args': args, 'goals': goals})
-
+    for rule in filter(lambda s: ':-' in s, statements):
+        add_rule(rule, rule_tokens)
+    
     # Get all constants from facts.
-    # We're assuming facts have NO variables.
-    # git
-    # Queries are effectively facts with variables, but they are handled at
-    # runtime, thus separately.
     constants = set()
     relations = {}
-    for fact in facts:
-        # print (fact, get_functor(fact))
-        try:
-            functor, args = get_functor(fact)
-            name = get_name(functor, args)
-        except TypeError:
-            continue  # Or break - phantom term is coming up.
-        if name not in relations:
-            relations[name] = []
-        relations[name].append(args)
-        constants.update(args)
+    for fact in filter(lambda s: ':-' not in s and s != '', statements):
+        add_fact(fact, relations, constants)
 
     return {
-        # 'variables': variables, # We don't store variables here because we perform unification
-        #                         # at runtime on local spaces.
         'constants': constants,
-
         'relations': relations,
-
         'rules': rule_tokens,
     }
 
