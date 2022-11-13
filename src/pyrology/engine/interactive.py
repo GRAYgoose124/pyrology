@@ -53,6 +53,8 @@ class InteractiveKernel:
                     self.engine.tokenizer.add_rule(q)
                 else:
                     self.handle_query(q)
+        
+        return True
 
     def run(self):
         import readline
