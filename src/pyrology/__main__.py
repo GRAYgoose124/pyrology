@@ -4,7 +4,7 @@ import argparse
 
 from pyrology.engine.core import KnowledgeEngine
 from pyrology.engine.interactive import InteractiveKernel
-from pyrology.utils import get_source, load_tokens, write_tokens
+from pyrology.engine.lexer.utils import get_source, write_tokens, load_tokens
 from pyrology.engine.lexer.__main__ import IgnisTokenizer
 
 logger = logging.getLogger(__name__)
@@ -45,7 +45,7 @@ def pyrology_handle_args(parser):
     if args.tokens is not None:
         path = args.tokens
         source = None
-        tokenizer.load_tokens(path)
+        load_tokens(path)
             
         logger.info('Loaded tokens from %s', path)
     elif args.script is not None:

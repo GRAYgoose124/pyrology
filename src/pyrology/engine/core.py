@@ -1,8 +1,8 @@
 import logging
 import queue
 from pyrology.engine.lexer.__main__ import IgnisTokenizer
-from pyrology.engine.lexer.utils import rule_munch
-from pyrology.utils import get_source
+from pyrology.engine.lexer.rules import rule_munch
+from pyrology.engine.lexer.utils import get_source
 
 
 logger = logging.getLogger(__name__)
@@ -36,7 +36,7 @@ class KnowledgeEngine:
             self.tokenizer = IgnisTokenizer()
         else:
             self.tokenizer = tokenizer
-            
+
         if path is not None:
             source = get_source(path)
             token_basis = self.tokenizer.prepare(source)

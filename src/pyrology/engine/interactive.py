@@ -1,6 +1,6 @@
 import logging
 from pyrology.engine.core import KnowledgeEngine
-from pyrology.engine.lexer.utils import parse_rule
+from pyrology.engine.lexer.rules import parse_rule
 
 
 logger = logging.getLogger(__name__)

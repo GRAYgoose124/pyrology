@@ -1,9 +1,11 @@
 import argparse
 import logging
 import os
+import yaml
 
-from pyrology.utils import TOKENS, attempt_take_as_binop, get_functor, get_name, get_source, write_tokens
-from pyrology.engine.lexer.utils import get_first_comma_not_in_parens, parse_rule, sanitize_src
+from pyrology.utils import get_functor, get_name
+from pyrology.engine.lexer.utils import sanitize_src, get_source, write_tokens
+from pyrology.engine.lexer.rules import parse_rule
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
