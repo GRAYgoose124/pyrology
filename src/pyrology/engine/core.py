@@ -2,7 +2,7 @@ import logging
 import queue
 from pyrology.engine.lexer.__main__ import IgnisTokenizer
 from pyrology.engine.lexer.rules import rule_munch
-from pyrology.engine.lexer.utils import get_source
+from pyrology.engine.lexer.utils import get_source, BIN_TOKENS
 
 
 logger = logging.getLogger(__name__)
@@ -142,6 +142,15 @@ class KnowledgeEngine:
         # TODO: Finally, we'll join all variables together.
         return unified, final_variables
 
+    def _resolve_binop(self, binop) -> bool:
+        a, op, b = binop
+        match op:
+            case r"\=":
+                return a != b
+            case _:
+                pass
+                # raise ValueError(f"Unknown binop {op}")
+
     def query(self, input_string):
         # Basic query of the form:
         # functor(arg1, arg2, ...)[,; functor2(arg1, arg2, ...) [,; ...]].
@@ -164,7 +173,7 @@ class KnowledgeEngine:
         for pgoal, binop in query:
             if pgoal[0] == "BINOP":
                 # TODO: we need to calculate the binop value for this
-                continue
+                partial_results.append((self._resolve_binop(binop), {}))
             r = None
             if pgoal[0] == "FUNCTOR":
                 functor, args = pgoal[1]

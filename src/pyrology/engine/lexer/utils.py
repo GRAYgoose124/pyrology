@@ -6,8 +6,8 @@ import logging
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
-
-BIN_TOKENS = [f"\\{op}" for op in ["=", "+", "-", "*"]]
+# <, =, =.., =@=, \=@=, =:=, =<, ==, =\=, >, >=, @<, @=<, @>, @>=, \=, \==, as, is, >:<, :<
+BIN_TOKENS = ["<", "=", "=<", "==", ">", ">=", r"\=", r"\=="]
 TOKENS = ["(", ")", ",", ";", ":-", "."] + BIN_TOKENS
 
 
@@ -35,14 +35,6 @@ def get_source(path):
             return f.read()
     else:
         print(f"No such file: {path}")
-
-
-def attempt_take_as_binop(term):
-    if "\\" in term:
-        for op in BIN_TOKENS:
-            if op in term:
-                a, b = term.split(op)
-                return (a, op, b)
 
 
 def sanitize_src(source):

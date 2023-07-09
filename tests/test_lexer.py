@@ -3,9 +3,9 @@ from pyrology.engine.lexer.utils import (
     sanitize_src,
     get_first_comma_not_in_parens,
     get_all_delims_not_in_parens,
-    attempt_take_as_binop,
 )
-from pyrology.engine.lexer.rules import parse_rule, rule_munch
+from pyrology.engine.lexer.rules import parse_rule, rule_munch, attempt_take_as_binop
+
 
 import logging
 
