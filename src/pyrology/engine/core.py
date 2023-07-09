@@ -45,13 +45,17 @@ class KnowledgeEngine:
         elif interactive:
             self.tokenizer.prepare()
 
-        logger.info(" - Initialized with %s constants, %s rules, and %s relations.",
-                    len(self.tokenizer.constants), len(self.tokenizer.rules), len(self.tokenizer.relations))
+        logger.info(
+            " - Initialized with %s constants, %s rules, and %s relations.",
+            len(self.tokenizer.constants),
+            len(self.tokenizer.rules),
+            len(self.tokenizer.relations),
+        )
 
     def _single_query(self, functor, entities):
         results = {}
         constant_matches = []
-        if '/' in functor and functor.split('/')[1].isnumeric():
+        if "/" in functor and functor.split("/")[1].isnumeric():
             term = functor
         else:
             term = f"{functor}/{len(entities)}"
@@ -76,11 +80,11 @@ class KnowledgeEngine:
                 elif e == e2:
                     if e not in constant_matches:
                         constant_matches.append(e)
-                    logger.debug("\t\t\t\tMatched %s to %s | %s",
-                                e, e2, results)
+                    logger.debug("\t\t\t\tMatched %s to %s | %s", e, e2, results)
                 else:
                     logger.debug(
-                        "\t\t\t\tFailed to match %s to %s | %s", e, e2, results)
+                        "\t\t\t\tFailed to match %s to %s | %s", e, e2, results
+                    )
 
         # checkk if all variables have been matched
         for e in entities:
@@ -110,12 +114,16 @@ class KnowledgeEngine:
                             logger.debug("\tCross referencing %s", key)
                             if variables[key] != variables2[key]:
                                 logger.debug(
-                                    "  \t\"Unification\" failed: %s != %s", variables[key], variables2[key])
+                                    '  \t"Unification" failed: %s != %s',
+                                    variables[key],
+                                    variables2[key],
+                                )
                                 unified = False
 
                                 if self.PASSTHROUGH_FAILURE_CONDITION:
                                     partial_variables = {
-                                        key: f"Fail= !any({variables[key]} in {variables2[key]})"}
+                                        key: f"Fail= !any({variables[key]} in {variables2[key]})"
+                                    }
                                 elif self.CLEAR_FINAL_VARIABLES_ON_FAIL:
                                     partial_variables = {}
 
@@ -145,7 +153,7 @@ class KnowledgeEngine:
         input_string = input_string.replace(" ", "")
 
         query = rule_munch(input_string)
-        logger.debug('CLIQuery: %s from %s', query, input_string)
+        logger.debug("CLIQuery: %s from %s", query, input_string)
 
         # Check relational queries.
         final_result = None
@@ -153,19 +161,25 @@ class KnowledgeEngine:
         partial_results = []
 
         prev_binop_comp = None
-        for functor, args, binop in query:
-            # check if and or
-            logger.debug("  Next goal: %s(%s) %s",
-                         functor, ', '.join(args), query)
+        for pgoal, binop in query:
+            if pgoal[0] == "BINOP":
+                # TODO: we need to calculate the binop value for this
+                continue
+            r = None
+            if pgoal[0] == "FUNCTOR":
+                functor, args = pgoal[1]
+                logger.debug(
+                    "  Functor goal: %s(%s) %s", functor, ", ".join(args), query
+                )
 
-            r = self._single_query(functor, args)
-            logger.debug("\tPartial result: %s", r)
+                r = self._single_query(functor, args)
+                logger.debug("\tPartial result: %s", r)
 
-            if prev_binop_comp == 'OR':
+            if prev_binop_comp == "OR":
                 partial_res_sets.append(partial_results)
                 partial_results = []
                 final_result = final_result or r[0]
-            elif prev_binop_comp == 'AND' or prev_binop_comp == "FIN":
+            elif prev_binop_comp == "AND" or prev_binop_comp == "FIN":
                 final_result = final_result and r[0]
             elif prev_binop_comp is None:
                 final_result = r[0]
@@ -173,7 +187,7 @@ class KnowledgeEngine:
             logger.debug("\tFinal result: %s, %s", final_result, r[0])
 
             partial_results.append((r[0], r[1]))
-            if binop == 'FIN':
+            if binop == "FIN":
                 break
 
             prev_binop_comp = binop
@@ -182,7 +196,8 @@ class KnowledgeEngine:
         # TODO: Technically we can remove final result updates prior to this point and just
         # chain here to make it.
         unify_result, final_variables = self._unify_bins(
-            partial_res_sets + [partial_results])
+            partial_res_sets + [partial_results]
+        )
 
         final_result = final_result and unify_result
 

@@ -1,9 +1,13 @@
 from pyrology.utils import get_functor, get_name
-from pyrology.engine.lexer.utils import attempt_take_as_binop, get_first_comma_not_in_parens
+from pyrology.engine.lexer.utils import (
+    attempt_take_as_binop,
+    get_first_comma_not_in_parens,
+    get_all_delims_not_in_parens,
+)
 
 
 def parse_rule(rule):
-    head, body = rule.split(':-')
+    head, body = rule.split(":-")
     functor, args = get_functor(head)
     name = get_name(functor, args)
 
@@ -12,51 +16,52 @@ def parse_rule(rule):
     return name, args, goals
 
 
+def parse_goal(body_part):
+    functor_or_binop = body_part
+    maybe_binop = attempt_take_as_binop(functor_or_binop)
+    if maybe_binop:
+        goal = "BINOP", maybe_binop
+    else:
+        functor, args = get_functor(functor_or_binop)
+        goal = "FUNCTOR", (functor, args)
+    return goal
+
+
+def split_rule_goals(body):
+    indelims = get_all_delims_not_in_parens(body, ",;")
+    start = 0
+    for index, delim in indelims:
+        match delim:
+            case ",":
+                delim = "AND"
+            case ";":
+                delim = "OR"
+
+        yield body[start:index], delim
+        start = index + 1
+
+    yield body[start:], "FIN"
+
+
 def rule_munch(body):
-    goals = []
-    while True:
-        # Grab len because it's used repeatedly.
-        bodylen = len(body)
-        # TODO: Is this making assumptions?
-        first_comma = get_first_comma_not_in_parens(body) or bodylen
-        try:
-            first_semicolon = body.index(';')
-        except ValueError:
-            first_semicolon = bodylen
+    """
+    functor = name(args)
+    args = [arg, arg, ...]
 
-        # Try to find the first comma or semicolon, whichever comes first.
-        if first_comma < bodylen or first_semicolon < bodylen:
-            if first_comma < first_semicolon:
-                split = first_comma
-                ty = 'AND'
-            elif first_semicolon < first_comma:
-                split = first_semicolon
-                ty = 'OR'
-        # Finally, if there are no commas or semicolons, break.
-        else:
-            if body:  # Gotta be honest, is this check necessary?
-                body = attempt_take_as_binop(body)
-                try:
-                    functor, args = get_functor(body)
-                    name = get_name(functor, args)
-                    # TODO: Should append this on '.' instead.
-                    goals.append([name, args, "FIN"])  # Super dupes!!
-                # This is accounting for infix binary ops, which are not functors???
-                except AttributeError:
-                    goals.append([body, None, "FIN"])
-            break
+    rule = head :- body
+    head = functor
+    body = [functor<,;> functor2<,;> ...].
+    """
+    # strip whitespace
+    body = "".join(body.split())
 
-        # Every iteration, we're splitting t:tt, this is you're classic
-        # token munching algo.
-        head, body = body[:split], body[split+1:]
+    # We already have parsed the head, so we can just munch the body here.
+    parsed_goals = []
+    print(list(split_rule_goals(body)))
+    for goal, delim in split_rule_goals(body):
+        goal = parse_goal(goal), delim
 
-        # However this "lexer" works, we've decided just to try to parse every goal
-        # as a binary operation at some point.
-        #
-        # I guess that works?
-        head = attempt_take_as_binop(head)
-        functor, args = get_functor(head)  # Duplicated?
-        name = get_name(functor, args)
-        goals.append([name, args, ty])
+        parsed_goals.append(goal)
 
-    return goals   
+    print(parsed_goals)
+    return parsed_goals
